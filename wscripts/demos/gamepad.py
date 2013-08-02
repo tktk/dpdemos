@@ -11,6 +11,7 @@ def build( _ctx ):
 
     libraries = {
         common.generateLibraryName( 'common' ),
+        common.generateLibraryName( 'input' ),
     }
 
     builder.build(
