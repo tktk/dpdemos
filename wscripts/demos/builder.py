@@ -38,7 +38,11 @@ def _generateIncludes(
 
 def _generateIncludesCommon( _ctx ):
     return [
-        common.INCLUDE_DIR,
+        os.path.join(
+            common.DEMOS_DIR,
+            common.COMMON,
+            common.INCLUDE_DIR,
+        )
     ] + [
         os.path.join(
             _ctx.env[ i ],
