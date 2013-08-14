@@ -43,12 +43,92 @@ const dp::StringChar * getDisplayRotateString(
     return nullptr;
 }
 
-dp::Bool showDisplay(
-    const dp::Display &         _DISPLAY
-    , const dp::DisplayMode &   _MODE
+void printDisplayMode(
+    const dp::DisplayMode & _MODE
 )
 {
-    const auto  ROTATE = dp::displayGetRotate( _DISPLAY );
+    std::printf(
+        "%dx%d %fHz"
+        , dp::displayModeGetWidth( _MODE )
+        , dp::displayModeGetHeight( _MODE )
+        , dp::displayModeGetRefreshRate( _MODE )
+    );
+}
+
+void showDisplayMode(
+    const dp::DisplayMode & _MODE
+)
+{
+    printDisplayMode(
+        _MODE
+    );
+    std::printf( "\n" );
+}
+
+dp::Bool showDisplayMode(
+    const dp::DisplayModeKey &  _MODE_KEY
+)
+{
+    dp::DisplayModeUnique   modeUnique(
+        dp::displayModeNew(
+            _MODE_KEY
+        )
+    );
+    if( modeUnique.get() == nullptr ) {
+        return false;
+    }
+
+    const auto &    MODE = *modeUnique;
+
+    showDisplayMode(
+        MODE
+    );
+
+    return true;
+}
+
+void showDisplayModesWithIndex(
+    const dp::DisplayModeKeyUniques &   _MODE_KEY_UNIQUES
+)
+{
+    auto    index = 0;
+    for( const auto & MODE_KEY_UNIQUE : _MODE_KEY_UNIQUES ) {
+        const auto &    MODE_KEY = *MODE_KEY_UNIQUE;
+
+        std::printf( "%d : ", index );
+        index++;
+
+        if( showDisplayMode(
+            MODE_KEY
+        ) == false ) {
+            std::printf( "missing display mode\n" );
+        }
+    }
+}
+
+dp::Bool showDisplay(
+    const dp::DisplayKey &  _KEY
+)
+{
+    dp::DisplayUnique   displayUnique( dp::displayNewFromKey( _KEY ) );
+    if( displayUnique.get() == nullptr ) {
+        return false;
+    }
+
+    const auto &    DISPLAY = *displayUnique;
+
+    const auto &    MODE_KEY = dp::displayGetModeKey(
+        DISPLAY
+    );
+
+    dp::DisplayModeUnique   modeUnique( dp::displayModeNew( MODE_KEY ) );
+    if( modeUnique.get() == nullptr ) {
+        return false;
+    }
+
+    const auto &    MODE = *modeUnique;
+
+    const auto  ROTATE = dp::displayGetRotate( DISPLAY );
 
     const auto  ROTATE_STRING = getDisplayRotateString( ROTATE );
     if( ROTATE_STRING == nullptr ) {
@@ -56,14 +136,17 @@ dp::Bool showDisplay(
     }
 
     std::printf(
-        "%dx%d+%d+%d ( Mode : %dx%d %fHz, Rotate : %s )\n"
-        , dp::displayGetWidth( _DISPLAY )
-        , dp::displayGetHeight( _DISPLAY )
-        , dp::displayGetX( _DISPLAY )
-        , dp::displayGetY( _DISPLAY )
-        , dp::displayModeGetWidth( _MODE )
-        , dp::displayModeGetHeight( _MODE )
-        , dp::displayModeGetRefreshRate( _MODE )
+        "%dx%d+%d+%d ( Mode : "
+        , dp::displayGetWidth( DISPLAY )
+        , dp::displayGetHeight( DISPLAY )
+        , dp::displayGetX( DISPLAY )
+        , dp::displayGetY( DISPLAY )
+    );
+    printDisplayMode(
+        MODE
+    );
+    std::printf(
+        ", Rotate : %s )\n"
         , ROTATE_STRING
     );
 
@@ -80,46 +163,346 @@ void showDisplays(
     for( const auto & KEY_UNIQUE : _KEY_UNIQUES ) {
         const auto &    KEY = *KEY_UNIQUE;
 
-        dp::DisplayUnique   displayUnique( dp::displayNewFromKey( KEY ) );
-        if( displayUnique.get() == nullptr ) {
-            continue;
-        }
-
-        const auto &    DISPLAY = *displayUnique;
-
-        const auto &    MODE_KEY = dp::displayGetModeKey(
-            DISPLAY
-        );
-
-        dp::DisplayModeUnique   modeUnique( dp::displayModeNew( MODE_KEY ) );
-        if( modeUnique.get() == nullptr ) {
-            continue;
-        }
-
-        const auto &    MODE = *modeUnique;
-
         showDisplay(
-            DISPLAY
-            , MODE
+            KEY
         );
     }
 }
 
 void showDisplaysWithIndex(
-    //TODO
+    std::mutex &                _mutex
+    , const DisplayKeyUniques & _KEY_UNIQUES
 )
 {
-    //TODO
+    auto    index = 0;
+
+    std::unique_lock< std::mutex >  lock( _mutex );
+
+    for( const auto & KEY_UNIQUE : _KEY_UNIQUES ) {
+        const auto &    KEY = *KEY_UNIQUE;
+
+        std::printf( "%d : ", index );
+        index++;
+
+        if( showDisplay(
+            KEY
+        ) == false ) {
+            std::printf( "missing display\n" );
+        }
+    }
+}
+
+void configDisplayInputX(
+    dp::Display &   _display
+)
+{
+    std::printf( "input x\n" );
+
+    dp::Int tmp;
+
+    if( inputInt( tmp ) == false ) {
+        return;
+    }
+
+    dp::Long    x = tmp;
+
+    displaySetX(
+        _display
+        , x
+    );
+}
+
+void configDisplayInputY(
+    dp::Display &   _display
+)
+{
+    std::printf( "input y\n" );
+
+    dp::Int tmp;
+
+    if( inputInt( tmp ) == false ) {
+        return;
+    }
+
+    dp::Long    y = tmp;
+
+    displaySetY(
+        _display
+        , y
+    );
+}
+
+void configDisplayInputRotate(
+    dp::Display &   _display
+)
+{
+    std::printf( "input rotate\n" );
+    std::printf( "0 : normal\n" );
+    std::printf( "1 : right\n" );
+    std::printf( "2 : inverted\n" );
+    std::printf( "3 : left\n" );
+    std::printf( "\n" );
+    std::printf( "* : cancel\n" );
+
+    dp::Int rotateInt;
+    if( inputInt( rotateInt ) == false ) {
+        return;
+    }
+
+    dp::DisplayRotate   rotate;
+    switch( rotateInt ) {
+    case 0:
+        rotate = dp::DisplayRotate::NORMAL;
+        break;
+
+    case 1:
+        rotate = dp::DisplayRotate::RIGHT;
+        break;
+
+    case 2:
+        rotate = dp::DisplayRotate::INVERTED;
+        break;
+
+    case 3:
+        rotate = dp::DisplayRotate::LEFT;
+        break;
+
+    default:
+        return;
+        break;
+    }
+
+    dp::displaySetRotate(
+        _display
+        , rotate
+    );
+}
+
+void configDisplayInputMode(
+    dp::Display &               _display
+    , dp::DisplayModeUnique &   _modeUnique
+    , const dp::DisplayKey &    _KEY
+)
+{
+    dp::DisplayModeKeyUniques   modeKeyUniques;
+    if( dp::displayModeKeyEnumUniques(
+        _KEY
+        , modeKeyUniques
+    ) == false ) {
+        std::printf( "missing display\n" );
+
+        return;
+    }
+
+    std::printf( "input mode\n" );
+    showDisplayModesWithIndex(
+        modeKeyUniques
+    );
+    std::printf( "\n" );
+    std::printf( "* : cancel\n" );
+
+    dp::Int index;
+    if( inputInt( index ) == false ) {
+        return;
+    }
+
+    if( index < 0 || index >= modeKeyUniques.size() ) {
+        return;
+    }
+
+    auto &  modeKeyUnique = modeKeyUniques[ index ];
+
+    const auto &    MODE_KEY = *modeKeyUnique;
+
+    dp::DisplayModeUnique   modeUnique(
+        dp::displayModeNew(
+            MODE_KEY
+        )
+    );
+    if( modeUnique.get() == nullptr ) {
+        std::printf( "missing display mode\n" );
+
+        return;
+    }
+
+    if( dp::displaySetModeKey(
+        _display
+        , MODE_KEY
+    ) == false ) {
+        std::printf( "missing display mode\n" );
+
+        return;
+    }
+
+    _modeUnique = std::move( modeUnique );
+}
+
+void applyDisplay(
+    const dp::DisplayKey &      _KEY
+    , const dp::Display &       _DISPLAY
+    , dp::ULong &               _width
+    , dp::ULong &               _height
+    , dp::Long &                _x
+    , dp::Long &                _y
+)
+{
+    if( dp::displayApply(
+        _KEY
+        , _DISPLAY
+    ) == false ) {
+        std::printf( "failed config display\n" );
+
+        return;
+    }
+
+    _width = dp::displayGetWidth( _DISPLAY );
+    _height = dp::displayGetHeight( _DISPLAY );
+    _x = dp::displayGetX( _DISPLAY );
+    _y = dp::displayGetY( _DISPLAY );
+}
+
+void configDisplay(
+    const dp::DisplayKey &  _KEY
+)
+{
+    dp::DisplayUnique   displayUnique(
+        dp::displayNewFromKey(
+            _KEY
+        )
+    );
+    if( displayUnique.get() == nullptr ) {
+        std::printf( "missing display\n" );
+
+        return;
+    }
+
+    auto &  display = *displayUnique;
+
+    auto    displayWidth = dp::displayGetWidth( display );
+    auto    displayHeight = dp::displayGetHeight( display );
+    auto    displayX = dp::displayGetX( display );
+    auto    displayY = dp::displayGetY( display );
+
+
+    dp::DisplayModeUnique   modeUnique(
+        dp::displayModeNew(
+            dp::displayGetModeKey(
+                display
+            )
+        )
+    );
+    if( modeUnique.get() == nullptr ) {
+        std::printf( "missing display mode\n" );
+
+        return;
+    }
+
+    while( 1 ) {
+        const auto  ROTATE_STRING = getDisplayRotateString(
+            dp::displayGetRotate( display )
+        );
+        if( ROTATE_STRING == nullptr ) {
+            std::printf( "failed get rotate string\n" );
+
+            return;
+        }
+
+        auto &  mode = *modeUnique;
+
+        std::printf(
+            "config %dx%d+%d+%d\n"
+            , displayWidth
+            , displayHeight
+            , displayX
+            , displayY
+        );
+        std::printf( "1 : x = %d\n", dp::displayGetX( display ) );
+        std::printf( "2 : y = %d\n", dp::displayGetY( display ) );
+        std::printf( "3 : rotate = %s\n", ROTATE_STRING );
+        std::printf( "4 : mode = " );
+        showDisplayMode(
+            mode
+        );
+        std::printf( "\n" );
+        std::printf( "0 : apply\n" );
+        std::printf( "\n" );
+        std::printf( "* : cancel\n" );
+
+        dp::Int input;
+        if( inputInt( input ) == false ) {
+            return;
+        }
+
+        switch( input ) {
+        case 1:
+            configDisplayInputX(
+                display
+            );
+            break;
+
+        case 2:
+            configDisplayInputY(
+                display
+            );
+            break;
+
+        case 3:
+            configDisplayInputRotate(
+                display
+            );
+            break;
+
+        case 4:
+            configDisplayInputMode(
+                display
+                , modeUnique
+                , _KEY
+            );
+            break;
+
+        case 0:
+            applyDisplay(
+                _KEY
+                , display
+                , displayWidth
+                , displayHeight
+                , displayX
+                , displayY
+            );
+            break;
+
+        default:
+            return;
+            break;
+        }
+    }
+}
+
+dp::DisplayKey * cloneDisplay(
+    std::mutex &                _mutex
+    , const DisplayKeyUniques & _KEY_UNIQUES
+    , dp::Int                   _index
+)
+{
+    std::unique_lock< std::mutex >  lock( _mutex );
+
+    if( _index < 0 || _index >= _KEY_UNIQUES.size() ) {
+        return nullptr;
+    }
+
+    return dp::displayKeyClone( *( _KEY_UNIQUES[ _index ] ) );
 }
 
 void configDisplayMenu(
-    //TODO
+    std::mutex &                _mutex
+    , const DisplayKeyUniques & _KEY_UNIQUES
 )
 {
     while( 1 ) {
         std::printf( "config display\n" );
         showDisplaysWithIndex(
-            //TODO
+            _mutex
+            , _KEY_UNIQUES
         );
         std::printf( "\n" );
         std::printf( "* : cancel\n" );
@@ -129,7 +512,22 @@ void configDisplayMenu(
             return;
         }
 
-        //TODO
+        dp::DisplayKeyUnique    keyUnique(
+            cloneDisplay(
+                _mutex
+                , _KEY_UNIQUES
+                , index
+            )
+        );
+        if( keyUnique.get() == nullptr ) {
+            return;
+        }
+
+        const auto &    KEY = *keyUnique;
+
+        configDisplay(
+            KEY
+        );
     }
 }
 
@@ -160,7 +558,8 @@ void mainMenu(
 
         case 1:
             configDisplayMenu(
-                //TODO
+                _mutex
+                , _KEY_UNIQUES
             );
             break;
 
