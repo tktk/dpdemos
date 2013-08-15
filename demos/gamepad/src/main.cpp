@@ -3,6 +3,7 @@
 #include "dp/input/gamepadkey.h"
 #include "dp/input/gamepad.h"
 #include "dp/common/stringconverter.h"
+#include "dp/common/functional.h"
 
 #include <map>
 #include <cstdio>
@@ -11,7 +12,7 @@
 typedef std::map<
     dp::GamePadKeyUnique
     , dp::GamePadUnique
-    , dp::GamePadKeyLess< dp::GamePadKeyUnique >
+    , dp::Less< dp::GamePadKeyUnique >
 > GamePadUniques;
 
 struct FindGamePadUnique
@@ -31,7 +32,7 @@ public:
         const GamePadUniques::value_type &  _VALUE
     ) const
     {
-        return dp::gamePadKeyEquals(
+        return dp::equals(
             this->KEY
             , *( _VALUE.first )
         );
@@ -174,11 +175,11 @@ dp::Int dpMain(
         }
     );
 
-    dp::GamePadManagerInfoUnique    managerInfoUnique( dp::gamePadManagerInfoNew() );
+    dp::GamePadManagerInfoUnique    managerInfoUnique( dp::newGamePadManagerInfo() );
 
     auto &  managerInfo = *managerInfoUnique;
 
-    dp::gamePadManagerInfoSetConnectEventHandler(
+    dp::setConnectEventHandler(
         managerInfo
         , [
             &gamePadUniques
@@ -205,7 +206,7 @@ dp::Int dpMain(
         }
     );
 
-    dp::GamePadManagerUnique    managerUnique( dp::gamePadManagerNew( managerInfo ) );
+    dp::GamePadManagerUnique    managerUnique( dp::newGamePadManager( managerInfo ) );
 
     std::printf( "Press ENTER to quit\n" );
 
