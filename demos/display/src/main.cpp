@@ -285,7 +285,7 @@ void configDisplayInputMode(
 )
 {
     dp::DisplayModeKeyUniques   modeKeyUniques;
-    if( dp::displayModeKeyEnumUniques(
+    if( dp::enumDisplayModeKeyUniques(
         _KEY
         , modeKeyUniques
     ) == false ) {
