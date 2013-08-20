@@ -490,7 +490,7 @@ dp::DisplayKey * cloneDisplay(
         return nullptr;
     }
 
-    return dp::displayKeyClone( *( _KEY_UNIQUES[ _index ] ) );
+    return dp::clone( *( _KEY_UNIQUES[ _index ] ) );
 }
 
 void configDisplayMenu(
@@ -584,7 +584,7 @@ DisplayKeyUniques::iterator findDisplayKeyUnique(
             const dp::DisplayKeyUnique &    _KEY_UNIQUE2
         )
         {
-            return dp::displayKeyEquals(
+            return dp::equals(
                 *_KEY_UNIQUE
                 , *_KEY_UNIQUE2
             );
