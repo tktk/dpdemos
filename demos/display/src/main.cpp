@@ -110,14 +110,14 @@ dp::Bool showDisplay(
     const dp::DisplayKey &  _KEY
 )
 {
-    dp::DisplayUnique   displayUnique( dp::displayNewFromKey( _KEY ) );
+    dp::DisplayUnique   displayUnique( dp::newDisplay( _KEY ) );
     if( displayUnique.get() == nullptr ) {
         return false;
     }
 
     const auto &    DISPLAY = *displayUnique;
 
-    const auto &    MODE_KEY = dp::displayGetModeKey(
+    const auto &    MODE_KEY = dp::getModeKey(
         DISPLAY
     );
 
@@ -128,7 +128,7 @@ dp::Bool showDisplay(
 
     const auto &    MODE = *modeUnique;
 
-    const auto  ROTATE = dp::displayGetRotate( DISPLAY );
+    const auto  ROTATE = dp::getRotate( DISPLAY );
 
     const auto  ROTATE_STRING = getDisplayRotateString( ROTATE );
     if( ROTATE_STRING == nullptr ) {
@@ -137,10 +137,10 @@ dp::Bool showDisplay(
 
     std::printf(
         "%dx%d+%d+%d ( Mode : "
-        , dp::displayGetWidth( DISPLAY )
-        , dp::displayGetHeight( DISPLAY )
-        , dp::displayGetX( DISPLAY )
-        , dp::displayGetY( DISPLAY )
+        , dp::getWidth( DISPLAY )
+        , dp::getHeight( DISPLAY )
+        , dp::getX( DISPLAY )
+        , dp::getY( DISPLAY )
     );
     printDisplayMode(
         MODE
@@ -206,7 +206,7 @@ void configDisplayInputX(
 
     dp::Long    x = tmp;
 
-    displaySetX(
+    dp::setX(
         _display
         , x
     );
@@ -226,7 +226,7 @@ void configDisplayInputY(
 
     dp::Long    y = tmp;
 
-    displaySetY(
+    dp::setY(
         _display
         , y
     );
@@ -272,7 +272,7 @@ void configDisplayInputRotate(
         break;
     }
 
-    dp::displaySetRotate(
+    dp::setRotate(
         _display
         , rotate
     );
@@ -325,7 +325,7 @@ void configDisplayInputMode(
         return;
     }
 
-    if( dp::displaySetModeKey(
+    if( dp::setModeKey(
         _display
         , MODE_KEY
     ) == false ) {
@@ -346,7 +346,7 @@ void applyDisplay(
     , dp::Long &                _y
 )
 {
-    if( dp::displayApply(
+    if( dp::apply(
         _KEY
         , _DISPLAY
     ) == false ) {
@@ -355,10 +355,10 @@ void applyDisplay(
         return;
     }
 
-    _width = dp::displayGetWidth( _DISPLAY );
-    _height = dp::displayGetHeight( _DISPLAY );
-    _x = dp::displayGetX( _DISPLAY );
-    _y = dp::displayGetY( _DISPLAY );
+    _width = dp::getWidth( _DISPLAY );
+    _height = dp::getHeight( _DISPLAY );
+    _x = dp::getX( _DISPLAY );
+    _y = dp::getY( _DISPLAY );
 }
 
 void configDisplay(
@@ -366,7 +366,7 @@ void configDisplay(
 )
 {
     dp::DisplayUnique   displayUnique(
-        dp::displayNewFromKey(
+        dp::newDisplay(
             _KEY
         )
     );
@@ -378,15 +378,15 @@ void configDisplay(
 
     auto &  display = *displayUnique;
 
-    auto    displayWidth = dp::displayGetWidth( display );
-    auto    displayHeight = dp::displayGetHeight( display );
-    auto    displayX = dp::displayGetX( display );
-    auto    displayY = dp::displayGetY( display );
+    auto    displayWidth = dp::getWidth( display );
+    auto    displayHeight = dp::getHeight( display );
+    auto    displayX = dp::getX( display );
+    auto    displayY = dp::getY( display );
 
 
     dp::DisplayModeUnique   modeUnique(
         dp::displayModeNew(
-            dp::displayGetModeKey(
+            dp::getModeKey(
                 display
             )
         )
@@ -399,7 +399,7 @@ void configDisplay(
 
     while( 1 ) {
         const auto  ROTATE_STRING = getDisplayRotateString(
-            dp::displayGetRotate( display )
+            dp::getRotate( display )
         );
         if( ROTATE_STRING == nullptr ) {
             std::printf( "failed get rotate string\n" );
@@ -416,8 +416,8 @@ void configDisplay(
             , displayX
             , displayY
         );
-        std::printf( "1 : x = %d\n", dp::displayGetX( display ) );
-        std::printf( "2 : y = %d\n", dp::displayGetY( display ) );
+        std::printf( "1 : x = %d\n", dp::getX( display ) );
+        std::printf( "2 : y = %d\n", dp::getY( display ) );
         std::printf( "3 : rotate = %s\n", ROTATE_STRING );
         std::printf( "4 : mode = " );
         showDisplayMode(
