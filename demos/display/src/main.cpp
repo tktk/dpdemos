@@ -630,11 +630,11 @@ dp::Int dpMain(
     std::mutex          mutex;
     DisplayKeyUniques   keyUniques;
 
-    dp::DisplayManagerInfoUnique    managerInfoUnique( dp::displayManagerInfoNew() );
+    dp::DisplayManagerInfoUnique    managerInfoUnique( dp::newDisplayManagerInfo() );
 
     auto &  managerInfo = *managerInfoUnique;
 
-    dp::displayManagerInfoSetConnectEventHandler(
+    dp::setConnectEventHandler(
         managerInfo
         , [
             &mutex
@@ -662,7 +662,7 @@ dp::Int dpMain(
         }
     );
 
-    dp::DisplayManagerUnique    managerUnique( dp::displayManagerNew( managerInfo ) );
+    dp::DisplayManagerUnique    managerUnique( dp::newDisplayManager( managerInfo ) );
 
     mainMenu(
         mutex
