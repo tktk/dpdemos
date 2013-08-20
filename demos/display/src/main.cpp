@@ -49,9 +49,9 @@ void printDisplayMode(
 {
     std::printf(
         "%dx%d %fHz"
-        , dp::displayModeGetWidth( _MODE )
-        , dp::displayModeGetHeight( _MODE )
-        , dp::displayModeGetRefreshRate( _MODE )
+        , dp::getWidth( _MODE )
+        , dp::getHeight( _MODE )
+        , dp::getRefreshRate( _MODE )
     );
 }
 
@@ -70,7 +70,7 @@ dp::Bool showDisplayMode(
 )
 {
     dp::DisplayModeUnique   modeUnique(
-        dp::displayModeNew(
+        dp::newDisplayMode(
             _MODE_KEY
         )
     );
@@ -121,7 +121,7 @@ dp::Bool showDisplay(
         DISPLAY
     );
 
-    dp::DisplayModeUnique   modeUnique( dp::displayModeNew( MODE_KEY ) );
+    dp::DisplayModeUnique   modeUnique( dp::newDisplayMode( MODE_KEY ) );
     if( modeUnique.get() == nullptr ) {
         return false;
     }
@@ -315,7 +315,7 @@ void configDisplayInputMode(
     const auto &    MODE_KEY = *modeKeyUnique;
 
     dp::DisplayModeUnique   modeUnique(
-        dp::displayModeNew(
+        dp::newDisplayMode(
             MODE_KEY
         )
     );
@@ -385,7 +385,7 @@ void configDisplay(
 
 
     dp::DisplayModeUnique   modeUnique(
-        dp::displayModeNew(
+        dp::newDisplayMode(
             dp::getModeKey(
                 display
             )
