@@ -5,7 +5,7 @@ from wscripts import common
 import os.path
 
 APPNAME = common.APPNAME
-VERSION = '0.2.0'
+VERSION = '0.3.0'
 
 out = common.BUILD_DIR
 
