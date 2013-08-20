@@ -55,7 +55,7 @@ void connectGamePad(
     }
 
     dp::GamePadUnique   gamePadUnique(
-        dp::gamePadNew(
+        dp::newGamePad(
             *_keyUnique
             , _INFO
         )
@@ -72,21 +72,21 @@ void connectGamePad(
 
     dp::Utf32   nameUtf32;
 
-    if( dp::gamePadGetName(
+    if( dp::getName(
         gamePad
         , nameUtf32
     ) == false ) {
         return;
     }
 
-    if( dp::gamePadGetButtons(
+    if( dp::getButtons(
         gamePad
         , buttons
     ) == false ) {
         return;
     }
 
-    if( dp::gamePadGetAxes(
+    if( dp::getAxes(
         gamePad
         , axes
     ) == false ) {
@@ -138,11 +138,11 @@ dp::Int dpMain(
 {
     GamePadUniques  gamePadUniques;
 
-    dp::GamePadInfoUnique   infoUnique( dp::gamePadInfoNew() );
+    dp::GamePadInfoUnique   infoUnique( dp::newGamePadInfo() );
 
     auto &  info = *infoUnique;
 
-    dp::gamePadInfoSetButtonEventHandler(
+    dp::setButtonEventHandler(
         info
         , [](
             dp::GamePad &   _gamePad
@@ -159,7 +159,7 @@ dp::Int dpMain(
             );
         }
     );
-    dp::gamePadInfoSetAxisEventHandler(
+    dp::setAxisEventHandler(
         info
         , [](
             dp::GamePad &   _gamePad
