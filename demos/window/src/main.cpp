@@ -1,13 +1,60 @@
 ﻿#include "dp/cli.h"
 #include "dp/window/window.h"
+#include "dp/window/windowflags.h"
+#include "dp/common/stringconverter.h"
 
+#include <thread>
 #include <mutex>
 #include <condition_variable>
 
-void waitEnd(
+dp::Bool generateTitle(
+    dp::Utf32 &             _title
+    , const dp::Utf32 &     _HEADER
+    , const dp::String &    _DESCRIPTION
+)
+{
+    _title.assign( _HEADER );
+
+    dp::Utf32   colon;
+    if( dp::toUtf32(
+        colon
+        , " : "
+    ) == false ) {
+        return false;
+    }
+
+    _title.append( colon );
+
+    dp::Utf32   descriptionUtf32;
+    if( dp::toUtf32(
+        descriptionUtf32
+        , _DESCRIPTION
+    ) == false ) {
+        return false;
+    }
+
+    _title.append( descriptionUtf32 );
+
+    return true;
+}
+
+void setClose(
     std::mutex &                _mutex
     , std::condition_variable & _cond
-    , const dp::Bool &          _ENDED
+    , dp::Bool &                _closed
+)
+{
+    std::unique_lock< std::mutex >  lock( _mutex );
+
+    _closed = true;
+
+    _cond.notify_all();
+}
+
+void waitClose(
+    std::mutex &                _mutex
+    , std::condition_variable & _cond
+    , const dp::Bool &          _CLOSED
 )
 {
     std::unique_lock< std::mutex >  lock( _mutex );
@@ -15,13 +62,122 @@ void waitEnd(
     _cond.wait(
         lock
         , [
-            &_ENDED
+            &_CLOSED
         ]
         {
-            return _ENDED;
+            return _CLOSED;
         }
     );
 }
+
+void waitAllClose(
+    std::mutex &                _mutex
+    , std::condition_variable & _cond
+    , const dp::Bool &          _CLOSED1
+    , const dp::Bool &          _CLOSED2
+)
+{
+    std::unique_lock< std::mutex >  lock( _mutex );
+
+    _cond.wait(
+        lock
+        , [
+            &_CLOSED1
+            , &_CLOSED2
+        ]
+        {
+            return
+                _CLOSED1 &&
+                _CLOSED2
+            ;
+        }
+    );
+}
+
+struct ThreadProc
+{
+private:
+    const dp::Utf32 &           TITLE;
+    const dp::String &          DESCRIPTION;
+    dp::WindowFlags             flags;
+    std::mutex &                mutex;
+    std::condition_variable &   cond;
+
+public:
+    ThreadProc(
+        const dp::Utf32 &           _TITLE
+        , const dp::String &        _DESCRIPTION
+        , dp::WindowFlags           _flags
+        , std::mutex &              _mutex
+        , std::condition_variable & _cond
+    )
+        : TITLE( _TITLE )
+        , DESCRIPTION( _DESCRIPTION )
+        , flags( _flags )
+        , mutex( _mutex )
+        , cond( _cond )
+    {
+    }
+
+    void operator()(
+    )
+    {
+        dp::Utf32   title;
+
+        if( generateTitle(
+            title
+            , this->TITLE
+            , this->DESCRIPTION
+        ) == false ) {
+            return;
+        }
+
+        dp::Bool    closed = false;
+
+        dp::WindowInfoUnique    infoUnique( dp::newWindowInfo() );
+
+        auto &  info = *infoUnique;
+
+        dp::setClosingEventHandler(
+            info
+            , [
+                this
+                , &closed
+            ]
+            (
+                dp::Window &
+            )
+            {
+                setClose(
+                    this->mutex
+                    , this->cond
+                    , closed
+                );
+            }
+        );
+
+        //TODO
+
+        dp::WindowUnique    windowUnique(
+            dp::newWindow(
+                info
+                , title
+                , 100
+                , 100
+                , this->flags
+            )
+        );
+        if( windowUnique.get() == nullptr ) {
+            return;
+        }
+
+        waitClose(
+            this->mutex
+            , this->cond
+            , closed
+        );
+    }
+};
 
 dp::Int dpMain(
     dp::Args &  _args
@@ -29,7 +185,6 @@ dp::Int dpMain(
 {
     std::mutex              mutex;
     std::condition_variable cond;
-    dp::Bool                ended = false;
 
     dp::Utf32   title;
 
@@ -37,45 +192,28 @@ dp::Int dpMain(
         title = _args[ 1 ];
     }
 
-    dp::WindowInfoUnique    infoUnique( dp::newWindowInfo() );
-
-    auto &  info = *infoUnique;
-
-    dp::setClosingEventHandler(
-        info
-        , [
-            &mutex
-            , &cond
-            , &ended
-        ]
-        (
-            dp::Window &
-        )
-        {
-            std::unique_lock< std::mutex >  lock( mutex );
-
-            ended = true;
-
-            cond.notify_all();
-        }
-    );
-
-    //TODO
-
-    dp::WindowUnique    windowUnique(
-        dp::newWindow(
-            info
-            , title
-            , 100
-            , 100
+    std::thread plain(
+        ThreadProc(
+            title
+            , "PLAIN"
+            , dp::WindowFlags::PLAIN
+            , mutex
+            , cond
         )
     );
 
-    waitEnd(
-        mutex
-        , cond
-        , ended
+    std::thread unresizable(
+        ThreadProc(
+            title
+            , "UNRESIZABLE"
+            , dp::WindowFlags::UNRESIZABLE
+            , mutex
+            , cond
+        )
     );
+
+    plain.join();
+    unresizable.join();
 
     return 0;
 }
