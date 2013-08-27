@@ -70,35 +70,11 @@ void waitClose(
     );
 }
 
-void waitAllClose(
-    std::mutex &                _mutex
-    , std::condition_variable & _cond
-    , const dp::Bool &          _CLOSED1
-    , const dp::Bool &          _CLOSED2
-)
-{
-    std::unique_lock< std::mutex >  lock( _mutex );
-
-    _cond.wait(
-        lock
-        , [
-            &_CLOSED1
-            , &_CLOSED2
-        ]
-        {
-            return
-                _CLOSED1 &&
-                _CLOSED2
-            ;
-        }
-    );
-}
-
 struct ThreadProc
 {
 private:
     const dp::Utf32 &           TITLE;
-    const dp::String &          DESCRIPTION;
+    const dp::String            DESCRIPTION;
     dp::WindowFlags             flags;
     std::mutex &                mutex;
     std::condition_variable &   cond;
@@ -106,7 +82,7 @@ private:
 public:
     ThreadProc(
         const dp::Utf32 &           _TITLE
-        , const dp::String &        _DESCRIPTION
+        , const dp::StringChar *    _DESCRIPTION
         , dp::WindowFlags           _flags
         , std::mutex &              _mutex
         , std::condition_variable & _cond
@@ -212,8 +188,19 @@ dp::Int dpMain(
         )
     );
 
+    std::thread alwaysOnTop(
+        ThreadProc(
+            title
+            , "ALWAYS_ON_TOP"
+            , dp::WindowFlags::ALWAYS_ON_TOP
+            , mutex
+            , cond
+        )
+    );
+
     plain.join();
     unresizable.join();
+    alwaysOnTop.join();
 
     return 0;
 }
