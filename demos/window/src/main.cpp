@@ -278,7 +278,7 @@ struct ThreadProc
 private:
     std::mutex &                mutex;
     std::condition_variable &   cond;
-    const NewWindow &           NEW_WINDOW;
+    NewWindow                   newWindow;
 
 public:
     ThreadProc(
@@ -288,7 +288,7 @@ public:
     )
         : mutex( _mutex )
         , cond( _cond )
-        , NEW_WINDOW( _NEW_WINDOW )
+        , newWindow( _NEW_WINDOW )
     {
     }
 
@@ -298,7 +298,7 @@ public:
         dp::Bool    closed = false;
 
         dp::WindowUnique    windowUnique(
-            this->NEW_WINDOW(
+            this->newWindow(
                 this->mutex
                 , this->cond
                 , closed
