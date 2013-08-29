@@ -2,10 +2,32 @@
 #include "dp/window/window.h"
 #include "dp/window/windowflags.h"
 #include "dp/common/stringconverter.h"
+#include "dp/common/thread.h"
 
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+
+const auto  WIDTH = 100;
+const auto  HEIGHT = 100;
+
+const auto  X = 1000;
+const auto  Y = 1000;
+
+typedef std::function<
+    dp::Window * (
+        std::mutex &
+        , std::condition_variable &
+        , dp::Bool &
+    )
+> NewWindow;
+
+typedef std::function<
+    dp::Window * (
+        const dp::WindowInfo &
+        , const dp::Utf32 &
+    )
+> GenerateWindow;
 
 dp::Bool generateTitle(
     dp::Utf32 &             _title
@@ -70,77 +92,216 @@ void waitClose(
     );
 }
 
+dp::Window * newWindow(
+    const dp::Utf32 &           _TITLE
+    , const dp::StringChar *    _DESCRIPTION
+    , std::mutex &              _mutex
+    , std::condition_variable & _cond
+    , dp::Bool &                _closed
+    , const GenerateWindow &    _GENERATE_WINDOW
+)
+{
+    dp::Utf32   title;
+
+    if( generateTitle(
+        title
+        , _TITLE
+        , _DESCRIPTION
+    ) == false ) {
+        return nullptr;
+    }
+
+    dp::WindowInfoUnique    infoUnique( dp::newWindowInfo() );
+    if( infoUnique.get() == nullptr ) {
+        return nullptr;
+    }
+
+    auto &  info = *infoUnique;
+
+    dp::setClosingEventHandler(
+        info
+        , [
+            &_mutex
+            , &_cond
+            , &_closed
+        ]
+        (
+            dp::Window &
+        )
+        {
+            setClose(
+                _mutex
+                , _cond
+                , _closed
+            );
+        }
+    );
+
+    return _GENERATE_WINDOW(
+        info
+        , title
+    );
+}
+
+dp::Window * newWindow(
+    const dp::Utf32 &           _TITLE
+    , const dp::StringChar *    _DESCRIPTION
+    , std::mutex &              _mutex
+    , std::condition_variable & _cond
+    , dp::Bool &                _closed
+)
+{
+    return newWindow(
+        _TITLE
+        , _DESCRIPTION
+        , _mutex
+        , _cond
+        , _closed
+        , [](
+            const dp::WindowInfo &  _INFO
+            , const dp::Utf32 &     _TITLE
+        )
+        {
+            return dp::newWindow(
+                _INFO
+                , _TITLE
+                , WIDTH
+                , HEIGHT
+            );
+        }
+    );
+}
+
+dp::Window * newWindow(
+    const dp::Utf32 &           _TITLE
+    , const dp::StringChar *    _DESCRIPTION
+    , dp::WindowFlags           _flags
+    , std::mutex &              _mutex
+    , std::condition_variable & _cond
+    , dp::Bool &                _closed
+)
+{
+    return newWindow(
+        _TITLE
+        , _DESCRIPTION
+        , _mutex
+        , _cond
+        , _closed
+        , [
+            &_flags
+        ]
+        (
+            const dp::WindowInfo &  _INFO
+            , const dp::Utf32 &     _TITLE
+        )
+        {
+            return dp::newWindow(
+                _INFO
+                , _TITLE
+                , WIDTH
+                , HEIGHT
+                , _flags
+            );
+        }
+    );
+}
+
+dp::Window * newWindowWithPosition(
+    const dp::Utf32 &           _TITLE
+    , const dp::StringChar *    _DESCRIPTION
+    , std::mutex &              _mutex
+    , std::condition_variable & _cond
+    , dp::Bool &                _closed
+)
+{
+    return newWindow(
+        _TITLE
+        , _DESCRIPTION
+        , _mutex
+        , _cond
+        , _closed
+        , [](
+            const dp::WindowInfo &  _INFO
+            , const dp::Utf32 &     _TITLE
+        )
+        {
+            return dp::newWindow(
+                _INFO
+                , _TITLE
+                , X
+                , Y
+                , WIDTH
+                , HEIGHT
+            );
+        }
+    );
+}
+
+dp::Window * newWindowWithPosition(
+    const dp::Utf32 &           _TITLE
+    , const dp::StringChar *    _DESCRIPTION
+    , dp::WindowFlags           _flags
+    , std::mutex &              _mutex
+    , std::condition_variable & _cond
+    , dp::Bool &                _closed
+)
+{
+    return newWindow(
+        _TITLE
+        , _DESCRIPTION
+        , _mutex
+        , _cond
+        , _closed
+        , [
+            &_flags
+        ]
+        (
+            const dp::WindowInfo &  _INFO
+            , const dp::Utf32 &     _TITLE
+        )
+        {
+            return dp::newWindow(
+                _INFO
+                , _TITLE
+                , X
+                , Y
+                , WIDTH
+                , HEIGHT
+                , _flags
+            );
+        }
+    );
+}
+
 struct ThreadProc
 {
 private:
-    const dp::Utf32 &           TITLE;
-    const dp::String            DESCRIPTION;
-    dp::WindowFlags             flags;
     std::mutex &                mutex;
     std::condition_variable &   cond;
+    const NewWindow &           NEW_WINDOW;
 
 public:
     ThreadProc(
-        const dp::Utf32 &           _TITLE
-        , const dp::StringChar *    _DESCRIPTION
-        , dp::WindowFlags           _flags
-        , std::mutex &              _mutex
+        std::mutex &                _mutex
         , std::condition_variable & _cond
+        , const NewWindow &         _NEW_WINDOW
     )
-        : TITLE( _TITLE )
-        , DESCRIPTION( _DESCRIPTION )
-        , flags( _flags )
-        , mutex( _mutex )
+        : mutex( _mutex )
         , cond( _cond )
+        , NEW_WINDOW( _NEW_WINDOW )
     {
     }
 
     void operator()(
     )
     {
-        dp::Utf32   title;
-
-        if( generateTitle(
-            title
-            , this->TITLE
-            , this->DESCRIPTION
-        ) == false ) {
-            return;
-        }
-
         dp::Bool    closed = false;
 
-        dp::WindowInfoUnique    infoUnique( dp::newWindowInfo() );
-
-        auto &  info = *infoUnique;
-
-        dp::setClosingEventHandler(
-            info
-            , [
-                this
-                , &closed
-            ]
-            (
-                dp::Window &
-            )
-            {
-                setClose(
-                    this->mutex
-                    , this->cond
-                    , closed
-                );
-            }
-        );
-
-        //TODO
-
         dp::WindowUnique    windowUnique(
-            dp::newWindow(
-                info
-                , title
-                , 100
-                , 100
-                , this->flags
+            this->NEW_WINDOW(
+                this->mutex
+                , this->cond
+                , closed
             )
         );
         if( windowUnique.get() == nullptr ) {
@@ -168,39 +329,132 @@ dp::Int dpMain(
         title = _args[ 1 ];
     }
 
-    std::thread plain(
+    std::thread noneFlags(
         ThreadProc(
-            title
-            , "PLAIN"
-            , dp::WindowFlags::PLAIN
-            , mutex
+            mutex
             , cond
+            , [
+                &title
+            ]
+            (
+                std::mutex &                _mutex
+                , std::condition_variable & _cond
+                , dp::Bool &                _closed
+            )
+            {
+                return newWindow(
+                    title
+                    , "none WindowFlags"
+                    , _mutex
+                    , _cond
+                    , _closed
+                );
+            }
         )
     );
+    dp::ThreadJoiner    noneFlagsJoiner( &noneFlags );
+
+    std::thread plain(
+        ThreadProc(
+            mutex
+            , cond
+            , [
+                &title
+            ]
+            (
+                std::mutex &                _mutex
+                , std::condition_variable & _cond
+                , dp::Bool &                _closed
+            )
+            {
+                return newWindow(
+                    title
+                    , "PLAIN"
+                    , _mutex
+                    , _cond
+                    , _closed
+                );
+            }
+        )
+    );
+    dp::ThreadJoiner    plainJoiner( &plain );
 
     std::thread unresizable(
         ThreadProc(
-            title
-            , "UNRESIZABLE"
-            , dp::WindowFlags::UNRESIZABLE
-            , mutex
+            mutex
             , cond
+            , [
+                &title
+            ]
+            (
+                std::mutex &                _mutex
+                , std::condition_variable & _cond
+                , dp::Bool &                _closed
+            )
+            {
+                return newWindow(
+                    title
+                    , "UNRESIZABLE"
+                    , dp::WindowFlags::UNRESIZABLE
+                    , _mutex
+                    , _cond
+                    , _closed
+                );
+            }
         )
     );
+    dp::ThreadJoiner    unresizableJoiner( &unresizable );
 
     std::thread alwaysOnTop(
         ThreadProc(
-            title
-            , "ALWAYS_ON_TOP"
-            , dp::WindowFlags::ALWAYS_ON_TOP
-            , mutex
+            mutex
             , cond
+            , [
+                &title
+            ]
+            (
+                std::mutex &                _mutex
+                , std::condition_variable & _cond
+                , dp::Bool &                _closed
+            )
+            {
+                return newWindow(
+                    title
+                    , "ALWAYS_ON_TOP"
+                    , dp::WindowFlags::ALWAYS_ON_TOP
+                    , _mutex
+                    , _cond
+                    , _closed
+                );
+            }
         )
     );
+    dp::ThreadJoiner    alwaysOnTopJoiner( &alwaysOnTop );
 
-    plain.join();
-    unresizable.join();
-    alwaysOnTop.join();
+    std::thread noneFlagsWithPosition(
+        ThreadProc(
+            mutex
+            , cond
+            , [
+                &title
+            ]
+            (
+                std::mutex &                _mutex
+                , std::condition_variable & _cond
+                , dp::Bool &                _closed
+            )
+            {
+                return newWindowWithPosition(
+                    title
+                    , "none WindowFlags with position"
+                    , _mutex
+                    , _cond
+                    , _closed
+                );
+            }
+        )
+    );
+    dp::ThreadJoiner    noneFlagsWithPositionJoiner( &noneFlagsWithPosition );
 
     return 0;
 }
