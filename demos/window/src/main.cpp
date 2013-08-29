@@ -471,8 +471,8 @@ dp::Int dpMain(
             {
                 return newWindowWithPosition(
                     title
-                    , "UNRESIZABLE with position"
-                    , dp::WindowFlags::UNRESIZABLE
+                    , "UNRESIZABLE | ALWAYS_ON_TOP with position"
+                    , dp::WindowFlags::UNRESIZABLE | dp::WindowFlags::ALWAYS_ON_TOP
                     , _mutex
                     , _cond
                     , _closed
