@@ -456,5 +456,31 @@ dp::Int dpMain(
     );
     dp::ThreadJoiner    noneFlagsWithPositionJoiner( &noneFlagsWithPosition );
 
+    std::thread unresizableWithPosition(
+        ThreadProc(
+            mutex
+            , cond
+            , [
+                &title
+            ]
+            (
+                std::mutex &                _mutex
+                , std::condition_variable & _cond
+                , dp::Bool &                _closed
+            )
+            {
+                return newWindowWithPosition(
+                    title
+                    , "UNRESIZABLE with position"
+                    , dp::WindowFlags::UNRESIZABLE
+                    , _mutex
+                    , _cond
+                    , _closed
+                );
+            }
+        )
+    );
+    dp::ThreadJoiner    unresizableWithPositionJoiner( &unresizableWithPosition );
+
     return 0;
 }
