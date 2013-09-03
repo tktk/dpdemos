@@ -7,6 +7,7 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+#include <cstdio>
 
 const auto  WIDTH = 100;
 const auto  HEIGHT = 100;
@@ -111,6 +112,15 @@ dp::Window * newWindow(
         return nullptr;
     }
 
+    dp::String  titleString;
+
+    if( dp::toString(
+        titleString
+        , title
+    ) == false ) {
+        return nullptr;
+    }
+
     dp::WindowInfoUnique    infoUnique( dp::newWindowInfo() );
     if( infoUnique.get() == nullptr ) {
         return nullptr;
@@ -133,6 +143,46 @@ dp::Window * newWindow(
                 _mutex
                 , _cond
                 , _closed
+            );
+        }
+    );
+
+    dp::setPositionEventHandler(
+        info
+        , [
+            titleString
+        ]
+        (
+            dp::Window &
+            , dp::Long      _x
+            , dp::Long      _y
+        )
+        {
+            std::printf(
+                "[%s] Position : %lldx%lld\n"
+                , titleString.c_str()
+                , _x
+                , _y
+            );
+        }
+    );
+
+    dp::setSizeEventHandler(
+        info
+        , [
+            titleString
+        ]
+        (
+            dp::Window &
+            , dp::ULong     _width
+            , dp::ULong     _height
+        )
+        {
+            std::printf(
+                "[%s] Size : %llux%llu\n"
+                , titleString.c_str()
+                , _width
+                , _height
             );
         }
     );
