@@ -128,7 +128,7 @@ dp::Window * newWindow(
 
     auto &  info = *infoUnique;
 
-    dp::setClosingEventHandler(
+    dp::setCloseEventHandler(
         info
         , [
             &_mutex
