@@ -8,6 +8,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <sstream>
+#include <cstdio>
 
 const auto  WIDTH = 100;
 const auto  HEIGHT = 100;
@@ -32,13 +33,20 @@ typedef std::function<
 
 struct Bounds
 {
-    dp::Bool    initializePosition = false;
+    dp::Bool    initializePosition;
     dp::Long    x;
     dp::Long    y;
 
-    dp::Bool    initializeSize = false;
+    dp::Bool    initializeSize;
     dp::ULong   width;
     dp::ULong   height;
+
+    Bounds(
+    )
+        : initializePosition( false )
+        , initializeSize( false )
+    {
+    }
 };
 
 dp::Bool generateTitle(
@@ -236,6 +244,62 @@ dp::Window * newWindow(
                 _window
                 , _bounds
                 , titleString
+            );
+        }
+    );
+
+    dp::setBeginPaintEventHandler(
+        info
+        , [
+            titleString
+        ]
+        (
+            dp::Window &
+        )
+        {
+            std::printf(
+                "Begin paint [%s]\n"
+                , titleString.c_str()
+            );
+        }
+    );
+
+    dp::setEndPaintEventHandler(
+        info
+        , [
+            titleString
+        ]
+        (
+            dp::Window &
+        )
+        {
+            std::printf(
+                "End paint [%s]\n"
+                , titleString.c_str()
+            );
+        }
+    );
+
+    dp::setPaintEventHandler(
+        info
+        , [
+            titleString
+        ]
+        (
+            dp::Window &    _window
+            , dp::ULong     _x
+            , dp::ULong     _y
+            , dp::ULong     _width
+            , dp::ULong     _height
+        )
+        {
+            std::printf(
+                "paint %llux%llu+%llu+%llu [%s]\n"
+                , _width
+                , _height
+                , _x
+                , _y
+                , titleString.c_str()
             );
         }
     );
