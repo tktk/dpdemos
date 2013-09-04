@@ -7,7 +7,7 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
-#include <cstdio>
+#include <sstream>
 
 const auto  WIDTH = 100;
 const auto  HEIGHT = 100;
@@ -29,6 +29,17 @@ typedef std::function<
         , const dp::Utf32 &
     )
 > GenerateWindow;
+
+struct Bounds
+{
+    dp::Bool    initializePosition = false;
+    dp::Long    x;
+    dp::Long    y;
+
+    dp::Bool    initializeSize = false;
+    dp::ULong   width;
+    dp::ULong   height;
+};
 
 dp::Bool generateTitle(
     dp::Utf32 &             _title
@@ -93,11 +104,39 @@ void waitClose(
     );
 }
 
+void setTitle(
+    dp::Window &            _window
+    , const Bounds &        _BOUNDS
+    , const dp::String &    _TITLE_STRING
+)
+{
+    if( _BOUNDS.initializePosition == false || _BOUNDS.initializeSize == false ) {
+        return;
+    }
+
+    std::ostringstream  stream;
+
+    stream << _TITLE_STRING << ' ' << _BOUNDS.width << 'x' << _BOUNDS.height << '+' << _BOUNDS.x << '+' << _BOUNDS.y;
+
+    dp::Utf32   title;
+    dp::toUtf32(
+        title
+        , stream.str()
+    );
+
+    dp::setTitle(
+        _window
+        , title
+    );
+}
+
 dp::Window * newWindow(
     const dp::Utf32 &           _TITLE
+    , std::mutex &              _mutexForBounds
+    , Bounds &                  _bounds
     , const dp::StringChar *    _DESCRIPTION
-    , std::mutex &              _mutex
-    , std::condition_variable & _cond
+    , std::mutex &              _mutexForClosed
+    , std::condition_variable & _condForClosed
     , dp::Bool &                _closed
     , const GenerateWindow &    _GENERATE_WINDOW
 )
@@ -131,8 +170,8 @@ dp::Window * newWindow(
     dp::setCloseEventHandler(
         info
         , [
-            &_mutex
-            , &_cond
+            &_mutexForClosed
+            , &_condForClosed
             , &_closed
         ]
         (
@@ -140,8 +179,8 @@ dp::Window * newWindow(
         )
         {
             setClose(
-                _mutex
-                , _cond
+                _mutexForClosed
+                , _condForClosed
                 , _closed
             );
         }
@@ -150,19 +189,26 @@ dp::Window * newWindow(
     dp::setPositionEventHandler(
         info
         , [
-            titleString
+            &_mutexForBounds
+            , &_bounds
+            , titleString
         ]
         (
-            dp::Window &
+            dp::Window &    _window
             , dp::Long      _x
             , dp::Long      _y
         )
         {
-            std::printf(
-                "[%s] Position : %lldx%lld\n"
-                , titleString.c_str()
-                , _x
-                , _y
+            std::unique_lock< std::mutex >  lock( _mutexForBounds );
+
+            _bounds.initializePosition = true;
+            _bounds.x = _x;
+            _bounds.y = _y;
+
+            setTitle(
+                _window
+                , _bounds
+                , titleString
             );
         }
     );
@@ -170,19 +216,26 @@ dp::Window * newWindow(
     dp::setSizeEventHandler(
         info
         , [
-            titleString
+            &_mutexForBounds
+            , &_bounds
+            , titleString
         ]
         (
-            dp::Window &
+            dp::Window &    _window
             , dp::ULong     _width
             , dp::ULong     _height
         )
         {
-            std::printf(
-                "[%s] Size : %llux%llu\n"
-                , titleString.c_str()
-                , _width
-                , _height
+            std::unique_lock< std::mutex >  lock( _mutexForBounds );
+
+            _bounds.initializeSize = true;
+            _bounds.width = _width;
+            _bounds.height = _height;
+
+            setTitle(
+                _window
+                , _bounds
+                , titleString
             );
         }
     );
@@ -195,17 +248,21 @@ dp::Window * newWindow(
 
 dp::Window * newWindow(
     const dp::Utf32 &           _TITLE
+    , std::mutex &              _mutexForBounds
+    , Bounds &                  _bounds
     , const dp::StringChar *    _DESCRIPTION
-    , std::mutex &              _mutex
-    , std::condition_variable & _cond
+    , std::mutex &              _mutexForClosed
+    , std::condition_variable & _condForClosed
     , dp::Bool &                _closed
 )
 {
     return newWindow(
         _TITLE
+        , _mutexForBounds
+        , _bounds
         , _DESCRIPTION
-        , _mutex
-        , _cond
+        , _mutexForClosed
+        , _condForClosed
         , _closed
         , [](
             const dp::WindowInfo &  _INFO
@@ -224,18 +281,22 @@ dp::Window * newWindow(
 
 dp::Window * newWindow(
     const dp::Utf32 &           _TITLE
+    , std::mutex &              _mutexForBounds
+    , Bounds &                  _bounds
     , const dp::StringChar *    _DESCRIPTION
     , dp::WindowFlags           _flags
-    , std::mutex &              _mutex
-    , std::condition_variable & _cond
+    , std::mutex &              _mutexForClosed
+    , std::condition_variable & _condForClosed
     , dp::Bool &                _closed
 )
 {
     return newWindow(
         _TITLE
+        , _mutexForBounds
+        , _bounds
         , _DESCRIPTION
-        , _mutex
-        , _cond
+        , _mutexForClosed
+        , _condForClosed
         , _closed
         , [
             &_flags
@@ -258,17 +319,21 @@ dp::Window * newWindow(
 
 dp::Window * newWindowWithPosition(
     const dp::Utf32 &           _TITLE
+    , std::mutex &              _mutexForBounds
+    , Bounds &                  _bounds
     , const dp::StringChar *    _DESCRIPTION
-    , std::mutex &              _mutex
-    , std::condition_variable & _cond
+    , std::mutex &              _mutexForClosed
+    , std::condition_variable & _condForClosed
     , dp::Bool &                _closed
 )
 {
     return newWindow(
         _TITLE
+        , _mutexForBounds
+        , _bounds
         , _DESCRIPTION
-        , _mutex
-        , _cond
+        , _mutexForClosed
+        , _condForClosed
         , _closed
         , [](
             const dp::WindowInfo &  _INFO
@@ -289,18 +354,22 @@ dp::Window * newWindowWithPosition(
 
 dp::Window * newWindowWithPosition(
     const dp::Utf32 &           _TITLE
+    , std::mutex &              _mutexForBounds
+    , Bounds &                  _bounds
     , const dp::StringChar *    _DESCRIPTION
     , dp::WindowFlags           _flags
-    , std::mutex &              _mutex
-    , std::condition_variable & _cond
+    , std::mutex &              _mutexForClosed
+    , std::condition_variable & _condForClosed
     , dp::Bool &                _closed
 )
 {
     return newWindow(
         _TITLE
+        , _mutexForBounds
+        , _bounds
         , _DESCRIPTION
-        , _mutex
-        , _cond
+        , _mutexForClosed
+        , _condForClosed
         , _closed
         , [
             &_flags
@@ -379,12 +448,16 @@ dp::Int dpMain(
         title = _args[ 1 ];
     }
 
+    std::mutex  mutexForNoneFlagsBounds;
+    Bounds      noneFlagsBounds;
     std::thread noneFlags(
         ThreadProc(
             mutex
             , cond
             , [
                 &title
+                , &mutexForNoneFlagsBounds
+                , &noneFlagsBounds
             ]
             (
                 std::mutex &                _mutex
@@ -394,6 +467,8 @@ dp::Int dpMain(
             {
                 return newWindow(
                     title
+                    , mutexForNoneFlagsBounds
+                    , noneFlagsBounds
                     , "none WindowFlags"
                     , _mutex
                     , _cond
@@ -404,12 +479,16 @@ dp::Int dpMain(
     );
     dp::ThreadJoiner    noneFlagsJoiner( &noneFlags );
 
+    std::mutex  mutexForPlainBounds;
+    Bounds      plainBounds;
     std::thread plain(
         ThreadProc(
             mutex
             , cond
             , [
                 &title
+                , &mutexForPlainBounds
+                , &plainBounds
             ]
             (
                 std::mutex &                _mutex
@@ -419,6 +498,8 @@ dp::Int dpMain(
             {
                 return newWindow(
                     title
+                    , mutexForPlainBounds
+                    , plainBounds
                     , "PLAIN"
                     , _mutex
                     , _cond
@@ -429,12 +510,16 @@ dp::Int dpMain(
     );
     dp::ThreadJoiner    plainJoiner( &plain );
 
+    std::mutex  mutexForUnresizableBounds;
+    Bounds      unresizableBounds;
     std::thread unresizable(
         ThreadProc(
             mutex
             , cond
             , [
                 &title
+                , &mutexForUnresizableBounds
+                , &unresizableBounds
             ]
             (
                 std::mutex &                _mutex
@@ -444,6 +529,8 @@ dp::Int dpMain(
             {
                 return newWindow(
                     title
+                    , mutexForUnresizableBounds
+                    , unresizableBounds
                     , "UNRESIZABLE"
                     , dp::WindowFlags::UNRESIZABLE
                     , _mutex
@@ -455,12 +542,16 @@ dp::Int dpMain(
     );
     dp::ThreadJoiner    unresizableJoiner( &unresizable );
 
+    std::mutex  mutexForAlwaysOnTopBounds;
+    Bounds      alwaysOnTopBounds;
     std::thread alwaysOnTop(
         ThreadProc(
             mutex
             , cond
             , [
                 &title
+                , &mutexForAlwaysOnTopBounds
+                , &alwaysOnTopBounds
             ]
             (
                 std::mutex &                _mutex
@@ -470,6 +561,8 @@ dp::Int dpMain(
             {
                 return newWindow(
                     title
+                    , mutexForAlwaysOnTopBounds
+                    , alwaysOnTopBounds
                     , "ALWAYS_ON_TOP"
                     , dp::WindowFlags::ALWAYS_ON_TOP
                     , _mutex
@@ -481,12 +574,16 @@ dp::Int dpMain(
     );
     dp::ThreadJoiner    alwaysOnTopJoiner( &alwaysOnTop );
 
+    std::mutex  mutexForNoneFlagsWithPositionBounds;
+    Bounds      noneFlagsWithPositionBounds;
     std::thread noneFlagsWithPosition(
         ThreadProc(
             mutex
             , cond
             , [
                 &title
+                , &mutexForNoneFlagsWithPositionBounds
+                , &noneFlagsWithPositionBounds
             ]
             (
                 std::mutex &                _mutex
@@ -496,6 +593,8 @@ dp::Int dpMain(
             {
                 return newWindowWithPosition(
                     title
+                    , mutexForNoneFlagsWithPositionBounds
+                    , noneFlagsWithPositionBounds
                     , "none WindowFlags with position"
                     , _mutex
                     , _cond
@@ -506,12 +605,16 @@ dp::Int dpMain(
     );
     dp::ThreadJoiner    noneFlagsWithPositionJoiner( &noneFlagsWithPosition );
 
-    std::thread unresizableWithPosition(
+    std::mutex  mutexForMultiFlagsWithPositionBounds;
+    Bounds      multiFlagsWithPositionBounds;
+    std::thread multiFlagsWithPosition(
         ThreadProc(
             mutex
             , cond
             , [
                 &title
+                , &mutexForMultiFlagsWithPositionBounds
+                , &multiFlagsWithPositionBounds
             ]
             (
                 std::mutex &                _mutex
@@ -521,6 +624,8 @@ dp::Int dpMain(
             {
                 return newWindowWithPosition(
                     title
+                    , mutexForMultiFlagsWithPositionBounds
+                    , multiFlagsWithPositionBounds
                     , "UNRESIZABLE | ALWAYS_ON_TOP with position"
                     , dp::WindowFlags::UNRESIZABLE | dp::WindowFlags::ALWAYS_ON_TOP
                     , _mutex
@@ -530,7 +635,7 @@ dp::Int dpMain(
             }
         )
     );
-    dp::ThreadJoiner    unresizableWithPositionJoiner( &unresizableWithPosition );
+    dp::ThreadJoiner    multiFlagsWithPositionJoiner( &multiFlagsWithPosition );
 
     return 0;
 }
