@@ -11,6 +11,8 @@ def build( _ctx ):
 
     libraries = {
         common.generateLibraryName( 'common' ),
+        common.generateLibraryName( 'window' ),
+        common.generateLibraryName( 'opengl' ),
     }
 
     builder.build(
