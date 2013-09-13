@@ -33,28 +33,25 @@ dp::Bool loadGLProcs(
 )
 {
     auto    glProcPtrs = {
-        &dp::toGLProc( dp::glEnable ),
-        &dp::toGLProc( dp::glDepthFunc ),
-        &dp::toGLProc( dp::glClearColor ),
-        &dp::toGLProc( dp::glViewport ),
-        &dp::toGLProc( dp::glMatrixMode ),
-        &dp::toGLProc( dp::glLoadIdentity ),
-        &dp::toGLProc( dp::glFrustum ),
-        &dp::toGLProc( dp::glTranslatef ),
-        &dp::toGLProc( dp::glScalef ),
-        &dp::toGLProc( dp::glRotatef ),
-        &dp::toGLProc( dp::glClear ),
-        &dp::toGLProc( dp::glBegin ),
-        &dp::toGLProc( dp::glEnd ),
-        &dp::toGLProc( dp::glColor3f ),
-        &dp::toGLProc( dp::glVertex3f ),
+        dp::toGLProcPtr( dp::glEnable ),
+        dp::toGLProcPtr( dp::glDepthFunc ),
+        dp::toGLProcPtr( dp::glClearColor ),
+        dp::toGLProcPtr( dp::glViewport ),
+        dp::toGLProcPtr( dp::glMatrixMode ),
+        dp::toGLProcPtr( dp::glLoadIdentity ),
+        dp::toGLProcPtr( dp::glFrustum ),
+        dp::toGLProcPtr( dp::glTranslatef ),
+        dp::toGLProcPtr( dp::glScalef ),
+        dp::toGLProcPtr( dp::glRotatef ),
+        dp::toGLProcPtr( dp::glClear ),
+        dp::toGLProcPtr( dp::glBegin ),
+        dp::toGLProcPtr( dp::glEnd ),
+        dp::toGLProcPtr( dp::glColor3f ),
+        dp::toGLProcPtr( dp::glVertex3f ),
     };
 
     for( auto glProcPtr : glProcPtrs ) {
-        auto &  glProc = *glProcPtr;
-
-        dp::loadGLProc( glProc );
-        if( glProc == nullptr ) {
+        if( dp::loadGLProc( glProcPtr ) == false ) {
             return false;
         }
     }
@@ -64,16 +61,16 @@ dp::Bool loadGLProcs(
 
 void rotate(
     std::mutex &        _mutex
-    , const dp::Int &   _ROTATE_X
-    , const dp::Int &   _ROTATE_Y
-    , const dp::Int &   _ROTATE_Z
+    , const dp::Float & _ROTATE_X
+    , const dp::Float & _ROTATE_Y
+    , const dp::Float & _ROTATE_Z
 )
 {
     dp::glLoadIdentity();
 
-    dp::Int rotateX;
-    dp::Int rotateY;
-    dp::Int rotateZ;
+    dp::Float   rotateX;
+    dp::Float   rotateY;
+    dp::Float   rotateZ;
     {
         std::unique_lock< std::mutex >  lock( _mutex );
 
@@ -110,9 +107,9 @@ dp::Window * newWindow(
     , std::condition_variable & _condForEnded
     , dp::Bool &                _ended
     , std::mutex &              _mutexForRotate
-    , const dp::Int &           _ROTATE_X
-    , const dp::Int &           _ROTATE_Y
-    , const dp::Int &           _ROTATE_Z
+    , const dp::Float &         _ROTATE_X
+    , const dp::Float &         _ROTATE_Y
+    , const dp::Float &         _ROTATE_Z
 )
 {
     dp::Utf32   title;
@@ -176,6 +173,25 @@ dp::Window * newWindow(
                 , 0
                 , 0
             );
+
+            dp::glMatrixMode( dp::GL_PROJECTION );
+
+            dp::glLoadIdentity();
+            dp::glFrustum(
+                -0.5
+                , 0.5
+                , -0.5
+                , 0.5
+                , 1
+                , 10
+            );
+            dp::glTranslatef(
+                0
+                , 0
+                , -5
+            );
+
+            dp::glMatrixMode( dp::GL_MODELVIEW );
         }
     );
 
@@ -203,25 +219,6 @@ dp::Window * newWindow(
                 , _width
                 , _height
             );
-
-            dp::glMatrixMode( dp::GL_PROJECTION );
-
-            dp::glLoadIdentity();
-            dp::glFrustum(
-                -0.5
-                , 0.5
-                , -0.5
-                , 0.5
-                , 1
-                , 10
-            );
-            dp::glTranslatef(
-                0
-                , 0
-                , -5
-            );
-
-            dp::glMatrixMode( dp::GL_MODELVIEW );
         }
     );
 
@@ -335,7 +332,7 @@ dp::Window * newWindow(
         , title
         , WIDTH
         , HEIGHT
-        //, dp::WindowFlags::UNRESIZABLE
+        , dp::WindowFlags::UNRESIZABLE
     );
 }
 
@@ -381,9 +378,9 @@ dp::Int dpMain(
     dp::Bool                ended = false;
 
     std::mutex  mutexForRotate;
-    dp::Int     rotateX = 0;
-    dp::Int     rotateY = 0;
-    dp::Int     rotateZ = 0;
+    dp::Float   rotateX = 0;
+    dp::Float   rotateY = 0;
+    dp::Float   rotateZ = 0;
 
     dp::WindowUnique    windowUnique(
         newWindow(
@@ -419,17 +416,17 @@ dp::Int dpMain(
             while( ended == false ) {
                 std::unique_lock< std::mutex >  lock( mutexForRotate );
 
-                rotateX += 1;
+                rotateX += 0.3;
                 if( rotateX > 360 ) {
                     rotateX -= 360;
                 }
 
-                rotateY += 1;
+                rotateY += 0.5;
                 if( rotateY > 360 ) {
                     rotateY -= 360;
                 }
 
-                rotateZ += 1;
+                rotateZ += 0.7;
                 if( rotateZ > 360 ) {
                     rotateZ -= 360;
                 }
@@ -444,7 +441,7 @@ dp::Int dpMain(
 
                 condForRotate.wait_for(
                     lock
-                    , std::chrono::milliseconds( 5 )
+                    , std::chrono::milliseconds( 1 )
                 );
             }
         }
