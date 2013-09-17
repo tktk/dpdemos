@@ -3,7 +3,7 @@
 #include "dp/common/stringconverter.h"
 #include "dp/window/window.h"
 #include "dp/opengl/glcontext.h"
-#include "dp/opengl/gl10.h"
+#include "dp/opengl/gl.h"
 
 #include <mutex>
 #include <condition_variable>
@@ -32,7 +32,7 @@ dp::GLContext * newGLContext(
 dp::Bool loadGLProcs(
 )
 {
-    auto    glProcPtrs = {
+    const auto  GL_PROC_PTRS = {
         dp::toGLProcPtr( dp::glEnable ),
         dp::toGLProcPtr( dp::glDepthFunc ),
         dp::toGLProcPtr( dp::glClearColor ),
@@ -50,13 +50,7 @@ dp::Bool loadGLProcs(
         dp::toGLProcPtr( dp::glVertex3f ),
     };
 
-    for( auto glProcPtr : glProcPtrs ) {
-        if( dp::loadGLProc( glProcPtr ) == false ) {
-            return false;
-        }
-    }
-
-    return true;
+    return dp::loadGLProcs( GL_PROC_PTRS );
 }
 
 void rotate(
@@ -416,17 +410,17 @@ dp::Int dpMain(
             while( ended == false ) {
                 std::unique_lock< std::mutex >  lock( mutexForRotate );
 
-                rotateX += 0.3;
+                rotateX += 0.03;
                 if( rotateX > 360 ) {
                     rotateX -= 360;
                 }
 
-                rotateY += 0.5;
+                rotateY += 0.05;
                 if( rotateY > 360 ) {
                     rotateY -= 360;
                 }
 
-                rotateZ += 0.7;
+                rotateZ += 0.07;
                 if( rotateZ > 360 ) {
                     rotateZ -= 360;
                 }
