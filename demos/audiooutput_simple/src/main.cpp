@@ -4,9 +4,12 @@
 #include "dp/audio/speakermanager.h"
 #include "dp/audio/speakerkey.h"
 
+#include "wav.h"
+
 #include <mutex>
 #include <condition_variable>
 #include <chrono>
+#include <cstdio>
 
 void waitForFindSpeakerKey(
     std::mutex &                _mutex
@@ -127,6 +130,8 @@ dp::Int dpMain(
         return 1;
     }
 
+    const auto &    FILE_PATH = _args[ 1 ];
+
     dp::SpeakerKeyUnique    keyUnique( getSpeakerKey() );
     if( keyUnique.get() == nullptr ) {
         std::printf( "スピーカーの検索に失敗\n" );
@@ -134,7 +139,23 @@ dp::Int dpMain(
         return 1;
     }
 
-    //TODO ファイルの解析
+    WaveData        waveData;
+    dp::AudioFormat audioFormat;
+    dp::UInt        sampleRate;
+    dp::UInt        channels;
+    if( readWav(
+        FILE_PATH
+        , waveData
+        , audioFormat
+        , sampleRate
+        , channels
+    ) == false ) {
+        std::printf( "ファイルの解析に失敗\n" );
+
+        return 1;
+    }
+
+    //TODO 音声の再生
 
     return 0;
 }

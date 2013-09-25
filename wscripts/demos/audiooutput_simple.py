@@ -7,6 +7,7 @@ import builder
 def build( _ctx ):
     sources = {
         'main',
+        'wav',
     }
 
     libraries = {
