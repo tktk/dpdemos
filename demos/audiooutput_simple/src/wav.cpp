@@ -265,10 +265,10 @@ namespace {
 
 dp::Bool readWav(
     const dp::Utf32 &   _FILE_PATH
-    , WaveData &        _waveData
     , dp::AudioFormat & _audioFormat
     , dp::UInt &        _sampleRate
     , dp::UInt &        _channels
+    , WaveData &        _waveData
 )
 {
     FileUnique  fileUnique(

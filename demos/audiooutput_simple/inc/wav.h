@@ -10,10 +10,10 @@ typedef std::vector< dp::Byte > WaveData;
 
 dp::Bool readWav(
     const dp::Utf32 &
-    , WaveData &
     , dp::AudioFormat &
     , dp::UInt &
     , dp::UInt &
+    , WaveData &
 );
 
 #endif  // AUDIOOUTPUT_SIMPLE_WAV_H

@@ -3,12 +3,15 @@
 #include "dp/common/stringconverter.h"
 #include "dp/audio/speakermanager.h"
 #include "dp/audio/speakerkey.h"
+#include "dp/audio/audioformat.h"
+#include "dp/audio/audioplayer.h"
 
 #include "wav.h"
 
 #include <mutex>
 #include <condition_variable>
 #include <chrono>
+#include <cstring>
 #include <cstdio>
 
 void waitForFindSpeakerKey(
@@ -114,6 +117,122 @@ dp::SpeakerKey * getSpeakerKey(
     return keyUnique.release();
 }
 
+void waitEnd(
+    std::mutex &                _mutex
+    , std::condition_variable & _cond
+    , const dp::Bool &          _ENDED
+)
+{
+    std::unique_lock< std::mutex >  lock( _mutex );
+
+    _cond.wait(
+        lock
+        , [
+            &_ENDED
+        ]
+        {
+            return _ENDED;
+        }
+    );
+}
+
+void playAudio(
+    const dp::SpeakerKey &  _KEY
+    , dp::AudioFormat       _audioFormat
+    , dp::UInt              _sampleRate
+    , dp::UInt              _channels
+    , const WaveData &      _WAVE_DATA
+)
+{
+    std::mutex              mutex;
+    std::condition_variable cond;
+    dp::Bool                ended = false;
+
+    dp::AudioPlayerInfoUnique   infoUnique( dp::newAudioPlayerInfo() );
+    if( infoUnique.get() == nullptr ) {
+        std::printf( "dp::AudioPlayerInfoの生成に失敗\n" );
+
+        return;
+    }
+    auto &  info = *infoUnique;
+
+    auto        waveDataPtr = _WAVE_DATA.data();
+    const auto  END_OF_WAVE_DATA = waveDataPtr + _WAVE_DATA.size();
+
+    dp::setPlayEventHandler(
+        info
+        , [
+            &waveDataPtr
+            , END_OF_WAVE_DATA
+        ]
+        (
+            dp::AudioPlayer &
+            , void *            _buffer
+            , dp::ULong         _bufferSize
+        ) -> dp::ULong
+        {
+            if( waveDataPtr >= END_OF_WAVE_DATA ) {
+                return 0;
+            }
+
+            const auto  WAVE_DATA_SIZE = END_OF_WAVE_DATA - waveDataPtr;
+            if( _bufferSize > WAVE_DATA_SIZE ) {
+                _bufferSize = WAVE_DATA_SIZE;
+            }
+
+            std::memcpy(
+                _buffer
+                , waveDataPtr
+                , _bufferSize
+            );
+
+            waveDataPtr += _bufferSize;
+
+            return _bufferSize;
+        }
+    );
+    dp::setEndEventHandler(
+        info
+        , [
+            &mutex
+            , &cond
+            , &ended
+        ]
+        (
+            dp::AudioPlayer &
+        )
+        {
+            std::unique_lock< std::mutex >  lock( mutex );
+
+            ended = true;
+
+            cond.notify_one();
+        }
+    );
+
+    dp::AudioPlayerUnique   audioPlayerUnique(
+        dp::newAudioPlayer(
+            _KEY
+            , info
+            , _audioFormat
+            , _sampleRate
+            , _channels
+        )
+    );
+    if( audioPlayerUnique.get() == nullptr ) {
+        std::printf( "dp::AudioPlayerの生成に失敗\n" );
+
+        return;
+    }
+    auto &  audioPlayer = *audioPlayerUnique;
+
+    waitEnd(
+        mutex
+        , cond
+        , ended
+    );
+}
+
 dp::Int dpMain(
     dp::Args &  _args
 )
@@ -138,24 +257,32 @@ dp::Int dpMain(
 
         return 1;
     }
+    const auto &    KEY = *keyUnique;
 
-    WaveData        waveData;
     dp::AudioFormat audioFormat;
     dp::UInt        sampleRate;
     dp::UInt        channels;
+    WaveData        waveData;
     if( readWav(
         FILE_PATH
-        , waveData
         , audioFormat
         , sampleRate
         , channels
+        , waveData
     ) == false ) {
         std::printf( "ファイルの解析に失敗\n" );
 
         return 1;
     }
 
-    //TODO 音声の再生
+    playAudio(
+        KEY
+        , audioFormat
+        , sampleRate
+        , channels
+        , waveData
+    );
+    waveData = std::move( WaveData() );
 
     return 0;
 }
