@@ -224,7 +224,6 @@ void playAudio(
 
         return;
     }
-    auto &  audioPlayer = *audioPlayerUnique;
 
     waitEnd(
         mutex
