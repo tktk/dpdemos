@@ -34,12 +34,12 @@ typedef std::function<
 struct Bounds
 {
     dp::Bool    initializePosition;
-    dp::Long    x;
-    dp::Long    y;
+    dp::Int     x;
+    dp::Int     y;
 
     dp::Bool    initializeSize;
-    dp::ULong   width;
-    dp::ULong   height;
+    dp::Int     width;
+    dp::Int     height;
 
     Bounds(
     )
@@ -203,8 +203,8 @@ dp::Window * newWindow(
         ]
         (
             dp::Window &    _window
-            , dp::Long      _x
-            , dp::Long      _y
+            , dp::Int       _x
+            , dp::Int       _y
         )
         {
             std::unique_lock< std::mutex >  lock( _mutexForBounds );
@@ -230,8 +230,8 @@ dp::Window * newWindow(
         ]
         (
             dp::Window &    _window
-            , dp::ULong     _width
-            , dp::ULong     _height
+            , dp::Int       _width
+            , dp::Int       _height
         )
         {
             std::unique_lock< std::mutex >  lock( _mutexForBounds );
@@ -287,14 +287,14 @@ dp::Window * newWindow(
         ]
         (
             dp::Window &    _window
-            , dp::ULong     _x
-            , dp::ULong     _y
-            , dp::ULong     _width
-            , dp::ULong     _height
+            , dp::Int       _x
+            , dp::Int       _y
+            , dp::Int       _width
+            , dp::Int       _height
         )
         {
             std::printf(
-                "paint %llux%llu+%llu+%llu [%s]\n"
+                "paint %dx%d+%d+%d [%s]\n"
                 , _width
                 , _height
                 , _x

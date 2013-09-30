@@ -203,8 +203,8 @@ dp::Window * newWindow(
         info
         , [](
             dp::Window &
-            , dp::ULong     _width
-            , dp::ULong     _height
+            , dp::Int       _width
+            , dp::Int       _height
         )
         {
             dp::glViewport(
@@ -226,10 +226,10 @@ dp::Window * newWindow(
         ]
         (
             dp::Window &    _window
-            , dp::ULong
-            , dp::ULong
-            , dp::ULong
-            , dp::ULong
+            , dp::Int
+            , dp::Int
+            , dp::Int
+            , dp::Int
         )
         {
             dp::glClear(
