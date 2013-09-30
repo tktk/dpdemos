@@ -198,13 +198,11 @@ void configDisplayInputX(
 {
     std::printf( "input x\n" );
 
-    dp::Int tmp;
+    dp::Int x;
 
-    if( inputInt( tmp ) == false ) {
+    if( inputInt( x ) == false ) {
         return;
     }
-
-    dp::Long    x = tmp;
 
     dp::setX(
         _display
@@ -218,13 +216,11 @@ void configDisplayInputY(
 {
     std::printf( "input y\n" );
 
-    dp::Int tmp;
+    dp::Int y;
 
-    if( inputInt( tmp ) == false ) {
+    if( inputInt( y ) == false ) {
         return;
     }
-
-    dp::Long    y = tmp;
 
     dp::setY(
         _display
@@ -340,10 +336,10 @@ void configDisplayInputMode(
 void applyDisplay(
     const dp::DisplayKey &      _KEY
     , const dp::Display &       _DISPLAY
-    , dp::ULong &               _width
-    , dp::ULong &               _height
-    , dp::Long &                _x
-    , dp::Long &                _y
+    , dp::Int &                 _width
+    , dp::Int &                 _height
+    , dp::Int &                 _x
+    , dp::Int &                 _y
 )
 {
     if( dp::apply(
