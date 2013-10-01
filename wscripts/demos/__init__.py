@@ -7,6 +7,7 @@ from . import gamepad
 from . import display
 
 from . import window
+from . import keyboard
 
 from . import opengl_simple
 
@@ -20,6 +21,7 @@ def build( _ctx ):
     display.build( _ctx )
 
     window.build( _ctx )
+    keyboard.build( _ctx )
 
     opengl_simple.build( _ctx )
 
