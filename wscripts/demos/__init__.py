@@ -8,6 +8,7 @@ from . import display
 
 from . import window
 from . import keyboard
+from . import mouse
 
 from . import opengl_simple
 
@@ -22,6 +23,7 @@ def build( _ctx ):
 
     window.build( _ctx )
     keyboard.build( _ctx )
+    mouse.build( _ctx )
 
     opengl_simple.build( _ctx )
 
