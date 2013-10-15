@@ -159,6 +159,38 @@ void playAudio(
     auto        waveDataPtr = _WAVE_DATA.data();
     const auto  END_OF_WAVE_DATA = waveDataPtr + _WAVE_DATA.size();
 
+    dp::setStartEventHandler(
+        info
+        , [
+        ]
+        (
+            dp::AudioPlayer &   _audioPlayer
+        )
+        {
+            dp::pause(
+                _audioPlayer
+                , false
+            );
+        }
+    );
+    dp::setEndEventHandler(
+        info
+        , [
+            &mutex
+            , &cond
+            , &ended
+        ]
+        (
+            dp::AudioPlayer &
+        )
+        {
+            std::unique_lock< std::mutex >  lock( mutex );
+
+            ended = true;
+
+            cond.notify_one();
+        }
+    );
     dp::setPlayEventHandler(
         info
         , [
@@ -189,24 +221,6 @@ void playAudio(
             waveDataPtr += _bufferSize;
 
             return _bufferSize;
-        }
-    );
-    dp::setEndEventHandler(
-        info
-        , [
-            &mutex
-            , &cond
-            , &ended
-        ]
-        (
-            dp::AudioPlayer &
-        )
-        {
-            std::unique_lock< std::mutex >  lock( mutex );
-
-            ended = true;
-
-            cond.notify_one();
         }
     );
 
