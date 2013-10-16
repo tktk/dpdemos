@@ -80,17 +80,15 @@ dp::SpeakerKey * getSpeakerKey(
                 return;
             }
 
+            if( keyUnique.get() != nullptr ) {
+                return;
+            }
+
             foundSpeakerKey(
                 mutex
                 , cond
                 , keyUnique
                 , _keyUnique
-            );
-
-            auto &  info = dp::getInfoMutable( _manager );
-            dp::setConnectEventHandler(
-                info
-                , nullptr
             );
         }
     );
