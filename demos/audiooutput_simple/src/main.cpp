@@ -55,7 +55,7 @@ dp::SpeakerKey * getSpeakerKey(
     std::condition_variable cond;
     dp::SpeakerKeyUnique    keyUnique;
 
-    dp::SpeakerManagerInfoUnique    infoUnique( dp::newSpeakerManagerInfo() );
+    auto    infoUnique = dp::unique( dp::newSpeakerManagerInfo() );
     if( infoUnique.get() == nullptr ) {
         std::printf( "dp::SpeakerManagerInfoの生成に失敗\n" );
 
@@ -93,7 +93,7 @@ dp::SpeakerKey * getSpeakerKey(
         }
     );
 
-    dp::SpeakerManagerUnique    managerUnique(
+    auto    managerUnique = dp::unique(
         dp::newSpeakerManager(
             info
         )
@@ -146,7 +146,7 @@ void playAudio(
     std::condition_variable cond;
     dp::Bool                ended = false;
 
-    dp::AudioPlayerInfoUnique   infoUnique( dp::newAudioPlayerInfo() );
+    auto    infoUnique = dp::unique( dp::newAudioPlayerInfo() );
     if( infoUnique.get() == nullptr ) {
         std::printf( "dp::AudioPlayerInfoの生成に失敗\n" );
 
@@ -222,7 +222,7 @@ void playAudio(
         }
     );
 
-    dp::AudioPlayerUnique   audioPlayerUnique(
+    auto    audioPlayerUnique = dp::unique(
         dp::newAudioPlayer(
             _KEY
             , info
@@ -262,7 +262,7 @@ dp::Int dpMain(
 
     const auto &    FILE_PATH = _args[ 1 ];
 
-    dp::SpeakerKeyUnique    keyUnique( getSpeakerKey() );
+    auto    keyUnique = dp::unique( getSpeakerKey() );
     if( keyUnique.get() == nullptr ) {
         std::printf( "スピーカーの検索に失敗\n" );
 
