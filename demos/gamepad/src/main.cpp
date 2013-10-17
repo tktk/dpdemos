@@ -54,7 +54,7 @@ void connectGamePad(
         return;
     }
 
-    dp::GamePadUnique   gamePadUnique(
+    auto    gamePadUnique = dp::unique(
         dp::newGamePad(
             *_keyUnique
             , _INFO
@@ -138,7 +138,12 @@ dp::Int dpMain(
 {
     GamePadUniques  gamePadUniques;
 
-    dp::GamePadInfoUnique   infoUnique( dp::newGamePadInfo() );
+    auto    infoUnique = dp::unique( dp::newGamePadInfo() );
+    if( infoUnique.get() == nullptr ) {
+        std::printf( "dp::GamePadInfoの生成に失敗\n" );
+
+        return 1;
+    }
 
     auto &  info = *infoUnique;
 
@@ -175,7 +180,12 @@ dp::Int dpMain(
         }
     );
 
-    dp::GamePadManagerInfoUnique    managerInfoUnique( dp::newGamePadManagerInfo() );
+    auto    managerInfoUnique = dp::unique( dp::newGamePadManagerInfo() );
+    if( managerInfoUnique.get() == nullptr ) {
+        std::printf( "dp::GamePadManagerInfoの生成に失敗\n" );
+
+        return 1;
+    }
 
     auto &  managerInfo = *managerInfoUnique;
 
@@ -206,7 +216,12 @@ dp::Int dpMain(
         }
     );
 
-    dp::GamePadManagerUnique    managerUnique( dp::newGamePadManager( managerInfo ) );
+    auto    managerUnique = dp::unique( dp::newGamePadManager( managerInfo ) );
+    if( managerUnique.get() == nullptr ) {
+        std::printf( "dp::GamePadManagerの生成に失敗\n" );
+
+        return 1;
+    }
 
     std::printf( "Press ENTER to quit\n" );
 
