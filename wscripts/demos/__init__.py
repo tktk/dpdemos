@@ -14,6 +14,8 @@ from . import opengl_simple
 
 from . import audiooutput_simple
 
+from . import writefile_simple
+
 def build( _ctx ):
     args.build( _ctx )
 
@@ -28,3 +30,5 @@ def build( _ctx ):
     opengl_simple.build( _ctx )
 
     audiooutput_simple.build( _ctx )
+
+    writefile_simple.build( _ctx )
