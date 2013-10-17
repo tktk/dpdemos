@@ -69,7 +69,7 @@ dp::Bool showDisplayMode(
     const dp::DisplayModeKey &  _MODE_KEY
 )
 {
-    dp::DisplayModeUnique   modeUnique(
+    auto    modeUnique = dp::unique(
         dp::newDisplayMode(
             _MODE_KEY
         )
@@ -110,7 +110,7 @@ dp::Bool showDisplay(
     const dp::DisplayKey &  _KEY
 )
 {
-    dp::DisplayUnique   displayUnique( dp::newDisplay( _KEY ) );
+    auto    displayUnique = dp::unique( dp::newDisplay( _KEY ) );
     if( displayUnique.get() == nullptr ) {
         return false;
     }
@@ -121,7 +121,7 @@ dp::Bool showDisplay(
         DISPLAY
     );
 
-    dp::DisplayModeUnique   modeUnique( dp::newDisplayMode( MODE_KEY ) );
+    auto    modeUnique = dp::unique( dp::newDisplayMode( MODE_KEY ) );
     if( modeUnique.get() == nullptr ) {
         return false;
     }
@@ -310,7 +310,7 @@ void configDisplayInputMode(
 
     const auto &    MODE_KEY = *modeKeyUnique;
 
-    dp::DisplayModeUnique   modeUnique(
+    auto    modeUnique = dp::unique(
         dp::newDisplayMode(
             MODE_KEY
         )
@@ -361,7 +361,7 @@ void configDisplay(
     const dp::DisplayKey &  _KEY
 )
 {
-    dp::DisplayUnique   displayUnique(
+    auto    displayUnique = dp::unique(
         dp::newDisplay(
             _KEY
         )
@@ -380,7 +380,7 @@ void configDisplay(
     auto    displayY = dp::getY( display );
 
 
-    dp::DisplayModeUnique   modeUnique(
+    auto    modeUnique = dp::unique(
         dp::newDisplayMode(
             dp::getModeKey(
                 display
@@ -508,7 +508,7 @@ void configDisplayMenu(
             return;
         }
 
-        dp::DisplayKeyUnique    keyUnique(
+        auto    keyUnique = dp::unique(
             cloneDisplay(
                 _mutex
                 , _KEY_UNIQUES
@@ -626,7 +626,12 @@ dp::Int dpMain(
     std::mutex          mutex;
     DisplayKeyUniques   keyUniques;
 
-    dp::DisplayManagerInfoUnique    managerInfoUnique( dp::newDisplayManagerInfo() );
+    auto    managerInfoUnique = dp::unique( dp::newDisplayManagerInfo() );
+    if( managerInfoUnique.get() == nullptr ) {
+        std::printf( "dp::DisplayManagerInfoの生成に失敗\n" );
+
+        return 1;
+    }
 
     auto &  managerInfo = *managerInfoUnique;
 
@@ -658,7 +663,12 @@ dp::Int dpMain(
         }
     );
 
-    dp::DisplayManagerUnique    managerUnique( dp::newDisplayManager( managerInfo ) );
+    auto    managerUnique = dp::unique( dp::newDisplayManager( managerInfo ) );
+    if( managerUnique.get() == nullptr ) {
+        std::printf( "dp::DisplayManagerの生成に失敗\n" );
+
+        return 1;
+    }
 
     mainMenu(
         mutex
