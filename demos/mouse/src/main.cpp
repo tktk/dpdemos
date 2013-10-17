@@ -16,7 +16,7 @@ dp::Window * newWindow(
     , dp::Bool &                _ended
 )
 {
-    dp::WindowInfoUnique    infoUnique( dp::newWindowInfo() );
+    auto    infoUnique = dp::unique( dp::newWindowInfo() );
     if( infoUnique.get() == nullptr ) {
         std::printf( "dp::WindowInfoの生成に失敗\n" );
 
@@ -118,7 +118,7 @@ dp::Int dpMain(
     std::condition_variable cond;
     dp::Bool                ended = false;
 
-    dp::WindowUnique    windowUnique(
+    auto    windowUnique = dp::unique(
         newWindow(
             title
             , mutex
