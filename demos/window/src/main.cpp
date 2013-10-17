@@ -168,7 +168,7 @@ dp::Window * newWindow(
         return nullptr;
     }
 
-    dp::WindowInfoUnique    infoUnique( dp::newWindowInfo() );
+    auto    infoUnique = dp::unique( dp::newWindowInfo() );
     if( infoUnique.get() == nullptr ) {
         return nullptr;
     }
@@ -480,7 +480,7 @@ public:
     {
         dp::Bool    closed = false;
 
-        dp::WindowUnique    windowUnique(
+        auto    windowUnique = dp::unique(
             this->newWindow(
                 this->mutex
                 , this->cond
