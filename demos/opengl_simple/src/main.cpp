@@ -18,7 +18,7 @@ const auto  HEIGHT = 100;
 dp::GLContext * newGLContext(
 )
 {
-    dp::GLContextInfoUnique infoUnique( dp::newGLContextInfo() );
+    auto    infoUnique = dp::unique( dp::newGLContextInfo() );
     if( infoUnique.get() == nullptr ) {
         std::printf( "dp::GLContextInfoの生成に失敗\n" );
 
@@ -116,7 +116,7 @@ dp::Window * newWindow(
         return nullptr;
     }
 
-    dp::WindowInfoUnique    infoUnique( dp::newWindowInfo() );
+    auto    infoUnique = dp::unique( dp::newWindowInfo() );
     if( infoUnique.get() == nullptr ) {
         std::printf( "dp::WindowInfoの生成に失敗\n" );
 
@@ -353,7 +353,7 @@ dp::Int dpMain(
     dp::Args &
 )
 {
-    dp::GLContextUnique glContextUnique( newGLContext() );
+    auto    glContextUnique = dp::unique( newGLContext() );
     if( glContextUnique.get() == nullptr ) {
         std::printf( "OpenGLコンテキスト生成に失敗\n" );
 
@@ -376,7 +376,7 @@ dp::Int dpMain(
     dp::Float   rotateY = 0;
     dp::Float   rotateZ = 0;
 
-    dp::WindowUnique    windowUnique(
+    auto    windowUnique = dp::unique(
         newWindow(
             glContext
             , mutexForEnded
