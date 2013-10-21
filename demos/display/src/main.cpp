@@ -200,7 +200,7 @@ void configDisplayInputX(
 
     dp::Int x;
 
-    if( inputInt( x ) == false ) {
+    if( input( x ) == false ) {
         return;
     }
 
@@ -218,7 +218,7 @@ void configDisplayInputY(
 
     dp::Int y;
 
-    if( inputInt( y ) == false ) {
+    if( input( y ) == false ) {
         return;
     }
 
@@ -241,7 +241,7 @@ void configDisplayInputRotate(
     std::printf( "* : cancel\n" );
 
     dp::Int rotateInt;
-    if( inputInt( rotateInt ) == false ) {
+    if( input( rotateInt ) == false ) {
         return;
     }
 
@@ -298,7 +298,7 @@ void configDisplayInputMode(
     std::printf( "* : cancel\n" );
 
     dp::Int index;
-    if( inputInt( index ) == false ) {
+    if( input( index ) == false ) {
         return;
     }
 
@@ -424,12 +424,12 @@ void configDisplay(
         std::printf( "\n" );
         std::printf( "* : cancel\n" );
 
-        dp::Int input;
-        if( inputInt( input ) == false ) {
+        dp::Int inputValue;
+        if( input( inputValue ) == false ) {
             return;
         }
 
-        switch( input ) {
+        switch( inputValue ) {
         case 1:
             configDisplayInputX(
                 display
@@ -504,7 +504,7 @@ void configDisplayMenu(
         std::printf( "* : cancel\n" );
 
         dp::Int index;
-        if( inputInt( index ) == false ) {
+        if( input( index ) == false ) {
             return;
         }
 
@@ -539,12 +539,12 @@ void mainMenu(
         std::printf( "\n" );
         std::printf( "* : quit\n" );
 
-        dp::Int input;
-        if( inputInt( input ) == false ) {
+        dp::Int inputValue;
+        if( input( inputValue ) == false ) {
             return;
         }
 
-        switch( input ) {
+        switch( inputValue ) {
         case 0:
             showDisplays(
                 _mutex
