@@ -2,8 +2,6 @@
 #include "dp/common/stringconverter.h"
 #include "dp/file/filer.h"
 
-const auto  BUFFER_SIZE = 10;
-
 dp::Int dpMain(
     dp::Args &  _args
 )
@@ -29,6 +27,8 @@ dp::Int dpMain(
         return 1;
     }
     auto &  file = *fileUnique;
+
+    const auto  BUFFER_SIZE = 10;
 
     std::vector< dp::StringChar >   buffer( BUFFER_SIZE );
 
