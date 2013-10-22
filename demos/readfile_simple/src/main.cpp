@@ -35,19 +35,24 @@ dp::Int dpMain(
     auto    bufferPtr = buffer.data();
 
     while( 1 ) {
-        const auto  READ_LENGTH = dp::read(
+        dp::ULong   bufferSize = buffer.size();
+        if( dp::read(
             file
             , bufferPtr
-            , BUFFER_SIZE
-        );
+            , bufferSize
+        ) == false ) {
+            std::printf( "ファイルからの読み込みに失敗\n" );
 
-        if( READ_LENGTH <= 0 ) {
+            return 1;
+        }
+
+        if( bufferSize <= 0 ) {
             break;
         }
 
         std::printf(
             "%.*s"
-            , READ_LENGTH
+            , bufferSize
             , bufferPtr
         );
     }

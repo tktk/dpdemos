@@ -36,15 +36,15 @@ dp::Int dpMain(
             writeString
         );
 
-        const auto  LENGTH = writeString.size();
-        if( LENGTH <= 0 ) {
+        dp::ULong   length = writeString.size();
+        if( length <= 0 ) {
             break;
         }
 
         if( dp::write(
             file
             , writeString.c_str()
-            , LENGTH
+            , length
         ) == false ) {
             std::printf( "ファイルへの書き込みに失敗\n" );
 
