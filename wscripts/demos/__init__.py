@@ -14,8 +14,9 @@ from . import opengl_simple
 
 from . import audiooutput_simple
 
-from . import writefile_simple
 from . import readfile_simple
+from . import readfilesize_simple
+from . import writefile_simple
 from . import readwritefile_simple
 
 def build( _ctx ):
@@ -33,6 +34,7 @@ def build( _ctx ):
 
     audiooutput_simple.build( _ctx )
 
-    writefile_simple.build( _ctx )
     readfile_simple.build( _ctx )
+    readfilesize_simple.build( _ctx )
+    writefile_simple.build( _ctx )
     readwritefile_simple.build( _ctx )
