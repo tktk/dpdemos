@@ -13,6 +13,7 @@ def build( _ctx ):
     libraries = {
         common.generateLibraryName( 'common' ),
         common.generateLibraryName( 'audio' ),
+        common.generateLibraryName( 'file' ),
     }
 
     builder.build(

@@ -1,45 +1,14 @@
 ﻿#include "wav.h"
 
 #include "dp/audio/audioformat.h"
+#include "dp/file/filer.h"
 #include "dp/common/stringconverter.h"
 #include "dp/common/primitives.h"
 
-#include <memory>
 #include <cstdio>
 #include <cstring>
 
 namespace {
-    struct CloseFile
-    {
-        void operator()(
-            std::FILE * _file
-        )
-        {
-            std::fclose( _file );
-        }
-    };
-
-    FILE * openFile(
-        const dp::Utf32 &   _FILE_PATH
-    )
-    {
-        dp::String  filePathString;
-        dp::toString(
-            filePathString
-            , _FILE_PATH
-        );
-
-        return fopen(
-            filePathString.c_str()
-            , "rb"
-        );
-    }
-
-    typedef std::unique_ptr<
-        std::FILE
-        , CloseFile
-    > FileUnique;
-
     struct RiffHeader
     {
         dp::Byte    magic[ 4 ];
@@ -76,16 +45,25 @@ namespace {
     const dp::UShort    FORMAT_ID_LINEAR_PCM = 0x1;
 
     dp::Bool checkRiffHeader(
-        std::FILE & _file
+        dp::FileR & _file
     )
     {
         RiffHeader  header;
-        if( std::fread(
-            &header
-            , sizeof( header )
-            , 1
-            , &_file
-        ) != 1 ) {
+
+        const auto  HEADER_SIZE = sizeof( header );
+
+        dp::ULong   size = HEADER_SIZE;
+        if( dp::read(
+            _file
+            , &header
+            , size
+        ) == false ) {
+            std::printf( "RIFFヘッダ読み込み処理が失敗\n" );
+
+            return false;
+        }
+
+        if( size != HEADER_SIZE ) {
             std::printf( "RIFFヘッダの読み込みに失敗\n" );
 
             return false;
@@ -105,16 +83,25 @@ namespace {
     }
 
     dp::Bool checkWavHeader(
-        std::FILE & _file
+        dp::FileR & _file
     )
     {
         WavHeader   header;
-        if( std::fread(
-            &header
-            , sizeof( header )
-            , 1
-            , &_file
-        ) != 1 ) {
+
+        const auto  HEADER_SIZE = sizeof( header );
+
+        dp::ULong   size = HEADER_SIZE;
+        if( dp::read(
+            _file
+            , &header
+            , size
+        ) == false ) {
+            std::printf( "WAVEヘッダ読み込み処理が失敗\n" );
+
+            return false;
+        }
+
+        if( size != HEADER_SIZE ) {
             std::printf( "WAVEヘッダの読み込みに失敗\n" );
 
             return false;
@@ -134,18 +121,31 @@ namespace {
     }
 
     dp::UInt findChunk(
-        std::FILE &         _file
+        dp::FileR &         _file
         , const dp::Byte *  _TAG
     )
     {
         RiffChunkHeader header;
+
+        const auto  HEADER_SIZE = sizeof( header );
+
+        dp::ULong   size = HEADER_SIZE;
         while( 1 ) {
-            if( std::fread(
-                &header
-                , sizeof( header )
-                , 1
-                , &_file
-            ) != 1 ) {
+            if( dp::read(
+                _file
+                , &header
+                , size
+            ) == false ) {
+                std::printf(
+                    "RIFFチャンクヘッダ[%.*s]読み込み処理が失敗\n"
+                    , static_cast< dp::Int >( sizeof( header.tag ) )
+                    , _TAG
+                );
+
+                return 0;
+            }
+
+            if( size != HEADER_SIZE ) {
                 std::printf(
                     "RIFFチャンクヘッダ[%.*s]の読み込みに失敗\n"
                     , static_cast< dp::Int >( sizeof( header.tag ) )
@@ -163,12 +163,11 @@ namespace {
                 break;
             }
 
-            if( std::fseek(
-                &_file
+            if( dp::movePosition(
+                _file
                 , header.size
-                , SEEK_CUR
-            ) != 0 ) {
-                std::printf( "RIFFチャンクヘッダのシークに失敗\n" );
+            ) == false ) {
+                std::printf( "次のRIFFチャンクヘッダへの移動に失敗\n" );
 
                 return 0;
             }
@@ -178,27 +177,33 @@ namespace {
     }
 
     dp::Bool readFmtChunk(
-        std::FILE &         _file
+        dp::FileR &         _file
         , dp::AudioFormat & _audioFormat
         , dp::UInt &        _sampleRate
         , dp::UInt &        _channels
     )
     {
-        const auto  SIZE = findChunk(
+        const auto  CHUNK_SIZE = findChunk(
             _file
             , TAG_FMT
         );
-        if( SIZE <= 0 ) {
+        if( CHUNK_SIZE <= 0 ) {
             return false;
         }
 
-        std::vector< dp::Byte > buffer( SIZE );
-        if( std::fread(
-            buffer.data()
-            , buffer.size()
-            , 1
-            , &_file
-        ) != 1 ) {
+        dp::ULong   size = CHUNK_SIZE;
+        std::vector< dp::Byte > buffer( CHUNK_SIZE );
+        if( dp::read(
+            _file
+            , buffer.data()
+            , size
+        ) == false ) {
+            std::printf( "fmtチャンク読み込み処理が失敗\n" );
+
+            return false;
+        }
+
+        if( size != CHUNK_SIZE ) {
             std::printf( "fmtチャンクの読み込みに失敗\n" );
 
             return false;
@@ -234,26 +239,33 @@ namespace {
     }
 
     dp::Bool readDataChunk(
-        std::FILE &     _file
+        dp::FileR &     _file
         , WaveData &    _waveData
     )
     {
-        const auto  SIZE = findChunk(
+        const auto  CHUNK_SIZE = findChunk(
             _file
             , TAG_DATA
         );
-        if( SIZE <= 0 ) {
+        if( CHUNK_SIZE <= 0 ) {
             return false;
         }
 
-        _waveData.resize( SIZE );
+        dp::ULong   size = CHUNK_SIZE;
 
-        if( std::fread(
-            _waveData.data()
-            , _waveData.size()
-            , 1
-            , &_file
+        _waveData.resize( CHUNK_SIZE );
+
+        if( dp::read(
+            _file
+            , _waveData.data()
+            , size
         ) != 1 ) {
+            std::printf( "波形データ読み込み処理が失敗\n" );
+
+            return false;
+        }
+
+        if( size != CHUNK_SIZE ) {
             std::printf( "波形データの読み込みに失敗\n" );
 
             return false;
@@ -271,8 +283,8 @@ dp::Bool readWav(
     , WaveData &        _waveData
 )
 {
-    FileUnique  fileUnique(
-        openFile(
+    auto    fileUnique = dp::unique(
+        dp::newFileR(
             _FILE_PATH
         )
     );
@@ -281,7 +293,6 @@ dp::Bool readWav(
 
         return false;
     }
-
     auto &  file = *fileUnique;
 
     if( checkRiffHeader(
@@ -296,13 +307,15 @@ dp::Bool readWav(
         return false;
     }
 
-    const auto  CHUNK_HEAD = std::ftell( &file );
+    dp::Long    chunkHead;
+    if( dp::getPosition(
+        file
+        , chunkHead
+    ) == false ) {
+        std::printf( "ファイルポインタの現在位置取得に失敗\n" );
 
-    std::fseek(
-        &file
-        , CHUNK_HEAD
-        , SEEK_SET
-    );
+        return false;
+    }
 
     if( readFmtChunk(
         file
@@ -310,6 +323,15 @@ dp::Bool readWav(
         , _sampleRate
         , _channels
     ) == false ) {
+        return false;
+    }
+
+    if( dp::setPosition(
+        file
+        , chunkHead
+    ) == false ) {
+        std::printf( "ファイルポインタの移動に失敗\n" );
+
         return false;
     }
 
