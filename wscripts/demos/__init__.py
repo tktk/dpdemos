@@ -20,6 +20,7 @@ from . import writefile_simple
 from . import writereadfile_simple
 from . import appendfile_simple
 from . import appendreadfile_simple
+from . import truncatefile_simple
 
 def build( _ctx ):
     args.build( _ctx )
@@ -42,3 +43,4 @@ def build( _ctx ):
     writereadfile_simple.build( _ctx )
     appendfile_simple.build( _ctx )
     appendreadfile_simple.build( _ctx )
+    truncatefile_simple.build( _ctx )
