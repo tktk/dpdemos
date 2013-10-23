@@ -4,6 +4,8 @@
 
 #include "input.h"
 
+#include <cstdio>
+
 dp::Bool write(
     dp::FileRW &    _file
 )

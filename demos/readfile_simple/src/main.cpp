@@ -2,6 +2,8 @@
 #include "dp/common/stringconverter.h"
 #include "dp/file/filer.h"
 
+#include <cstdio>
+
 dp::Int dpMain(
     dp::Args &  _args
 )

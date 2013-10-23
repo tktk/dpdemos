@@ -4,6 +4,8 @@
 
 #include "input.h"
 
+#include <cstdio>
+
 dp::Int dpMain(
     dp::Args &  _args
 )
