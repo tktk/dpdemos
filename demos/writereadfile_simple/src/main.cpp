@@ -89,7 +89,7 @@ dp::Int dpMain(
 
     const auto &    FILE_PATH = _args[ 1 ];
 
-    auto    fileUnique = dp::unique( dp::newFileRW( FILE_PATH ) );
+    auto    fileUnique = dp::unique( dp::newFileWR( FILE_PATH ) );
     if( fileUnique.get() == nullptr ) {
         std::printf( "dp::FileRWの生成に失敗\n" );
 

@@ -16,7 +16,7 @@ def build( _ctx ):
 
     builder.build(
         _ctx,
-        'readwritefile_simple',
+        'writereadfile_simple',
         sources,
         libraries = libraries,
     )
