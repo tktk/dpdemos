@@ -18,6 +18,7 @@ from . import readfile_simple
 from . import readfilesize_simple
 from . import writefile_simple
 from . import readwritefile_simple
+from . import appendfile_simple
 
 def build( _ctx ):
     args.build( _ctx )
@@ -38,3 +39,4 @@ def build( _ctx ):
     readfilesize_simple.build( _ctx )
     writefile_simple.build( _ctx )
     readwritefile_simple.build( _ctx )
+    appendfile_simple.build( _ctx )
